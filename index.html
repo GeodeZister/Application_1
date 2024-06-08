@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>2D Plan Drawing with Enhanced Snap-to-Edge, Raster Feature, and SVG Export</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.11/paper-full.min.js"></script>
+    <style>
+        canvas {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #000;
+        }
+        #controls {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="toggleSnap">Toggle Snap-to-Edge</button>
+        <button id="undo">Undo</button>
+        <button id="toggleBackground">Toggle Background</button>
+        <button id="exportSVG">Export as SVG</button>
+        <label for="lineWidth">Line width:</label>
+        <input type="range" id="lineWidth" min="1" max="10" value="1">
+        <label for="lineColor">Line Color:</label>
+        <input type="color" id="lineColor" value="#000000">
+        <label for="lineStyle">Line style:</label>
+        <select id="lineStyle">
+            <option value="solid">Solid</option>
+            <option value="dashed">Dotted line</option>
+            <option value="dotted">Dots</option>
+        </select>
+        <button id="toggleGrid">Toggle Grid</button>
+        <label for="scaleInput">Scale (px on metr):</label>
+        <input type="number" id="scaleInput" value="50">
+    </div>
+    <canvas id="drawingCanvas" resize></canvas>
+    <script>
+        paper.setup('drawingCanvas');
+
+        var raster = new paper.Raster({
+            source: 'https://i.ibb.co/T4pjHw7/photo-2024-02-12-09-47-30.jpg',
+            position: paper.view.center,
+        });
+        raster.visible = false; // За замовчуванням растр невидимий
+
+        var tool = new paper.Tool();
+        var path;
+        var snapToEdge = false;
+        var snapRadius = 110; // Встановлюємо радіус магнітіння
+        var paths = [];
+        var lastPoint; // Остання точка для відстеження переміщення
+        var moving = false; // Чи активно переміщення
+        var isMoving = false; // Додайте цю змінну
+        var lineWidthInput = document.getElementById('lineWidth');
+        var lineColorInput = document.getElementById('lineColor');
+        var lineStyleSelect = document.getElementById('lineStyle');
+        var scale = parseInt(document.getElementById('scaleInput').value, 10);
+        var origin = new paper.Point(0, 0); // Початкова точка може бути задана користувачем
+        var gridVisible = false; // Змінна для відстеження стану відображення сітки
+        var gridLayer = new paper.Layer();
+        var drawingLayer = new paper.Layer();
+
+
+
+        function drawGrid(visible) {
+           gridLayer.activate(); // Активуємо шар сітки
+           gridLayer.clear(); // Очищуємо шар сітки перед малюванням нової сітки
+           if (visible) { // Перевіряємо, чи повинна сітка бути видимою
+               let bounds = paper.view.bounds;
+               // Використання scale для визначення відстані між лініями сітки
+               for (let x = origin.x; x < bounds.width; x += scale) {
+                   let path = new paper.Path();
+                   path.strokeColor = '#e0e0e0';
+                   path.moveTo(new paper.Point(x, bounds.top));
+                   path.lineTo(new paper.Point(x, bounds.bottom));
+               }
+               for (let y = origin.y; y < bounds.height; y += scale) {
+                   let path = new paper.Path();
+                   path.strokeColor = '#e0e0e0';
+                   path.moveTo(new paper.Point(bounds.left, y));
+                   path.lineTo(new paper.Point(bounds.right, y));
+               }
+           }
+           drawingLayer.activate(); // Повертаємося до шару малюнків для подальших дій
+        }
+
+
+        document.getElementById('toggleGrid').addEventListener('click', function() {
+            gridVisible = !gridVisible;
+            drawGrid(gridVisible); // Викликаємо функцію малювання сітки з новим станом видимості
+        });
+
+        function exportPlanWithMetadata() {
+            let svg = paper.project.exportSVG({asString: true});
+            let metadata = {
+                scale: `1px = ${1 / scale}m`, // Актуалізація масштабу
+                origin: origin, // Збереження початкової точки
+                // Інші метадані...
+            };
+            let metadataString = JSON.stringify(metadata);
+            // Тут код для збереження SVG та метаданих у файл або використання для подальших дій
+        }
+
+        // Оновлення масштабу за запитом користувача
+        document.getElementById('scaleInput').addEventListener('change', function() {
+            scale = parseInt(this.value, 10);
+            gridLayer.clear(); // Очищення лише шару сітки
+            drawGrid(gridVisible); // Перемалювання сітки з урахуванням видимості
+        });
+
+        function updateLineStyle(path) {
+            path.strokeWidth = parseInt(lineWidthInput.value, 10);
+            path.strokeColor = lineColorInput.value;
+
+            var selectedStyle = lineStyleSelect.value;
+            switch (selectedStyle) {
+                case 'solid':
+                    path.dashArray = [];
+                    break;
+                case 'dashed':
+                    path.dashArray = [10, 4];
+                    break;
+                case 'dotted':
+                    path.dashArray = [1, 3];
+                    break;
+            }
+        }
+
+        paper.view.element.addEventListener('mousedown', function(event) {
+            // Перевіряємо, чи була натиснута кнопка колеса миші
+            if (event.button === 1) {
+                lastPoint = new paper.Point(event.clientX, event.clientY);
+                moving = true;
+                isMoving = true;
+                event.preventDefault(); // Запобігаємо будь-якій стандартній поведінці
+            }
+        }, false);
+
+        paper.view.element.addEventListener('mousemove', function(event) {
+            if (moving) {
+                var currentPoint = new paper.Point(event.clientX, event.clientY);
+                var delta = currentPoint.subtract(lastPoint);
+                paper.view.scrollBy(delta.multiply(-1)); // Переміщуємо вид
+                lastPoint = currentPoint;
+                event.preventDefault();
+            }
+        }, false);
+
+        document.addEventListener('mouseup', function(event) {
+            if (moving && event.button === 1) {
+                moving = false;
+                isMoving = false; // Відновлюємо стан переміщення
+                event.preventDefault();
+            }
+        }, false);
+
+        // Функція для пошуку найближчої точки на існуючих шляхах в межах радіуса
+        function findNearestPoint(point) {
+            var minDistance = Infinity;
+            var nearestPoint = null;
+            paper.project.activeLayer.children.forEach(function(child) {
+                if (child instanceof paper.Path) {
+                    child.segments.forEach(function(segment) {
+                        var distance = point.getDistance(segment.point);
+                        if (distance < minDistance && distance <= snapRadius) {
+                            minDistance = distance;
+                            nearestPoint = segment.point;
+                        }
+                    });
+                }
+            });
+            return nearestPoint ? nearestPoint : point;
+        }
+
+        document.getElementById('toggleSnap').addEventListener('click', function() {
+            snapToEdge = !snapToEdge;
+            this.textContent = snapToEdge ? "Snap-to-Edge ON" : "Toggle Snap-to-Edge";
+        });
+
+        document.getElementById('undo').addEventListener('click', function() {
+            if (paths.length > 0) {
+                var lastPath = paths.pop(); // Видаляємо останній шлях з масиву
+                lastPath.remove(); // Видаляємо шлях з проекту Paper.js
+            }
+        });
+
+        document.getElementById('drawingCanvas').addEventListener('wheel', function(event) {
+            var zoom = event.deltaY < 0 ? 1.1 : 0.9;
+            paper.view.scale(zoom, new paper.Point(event.offsetX, event.offsetY));
+
+            event.preventDefault();
+        }, false);
+
+        document.getElementById('toggleBackground').addEventListener('click', function() {
+            raster.visible = !raster.visible; // Перемикання видимості растру
+        });
+
+        document.getElementById('exportSVG').addEventListener('click', function() {
+            var svg = paper.project.exportSVG({asString:true});
+            var blob = new Blob([svg], {type: "image/svg+xml"});
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "drawing.svg";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        tool.onMouseDown = function(event) {
+            if (!isMoving) { // Перевіряємо, що переміщення не активно
+                path = new paper.Path();
+                updateLineStyle(path);
+                // path.strokeColor = 'black';
+                var startPoint = snapToEdge ? findNearestPoint(event.point) : event.point;
+                path.add(startPoint);
+            }
+        }
+
+        tool.onMouseDrag = function(event) {
+            if (!isMoving && path) { // Додаємо перевірку на isMoving
+                if (path.segments.length === 2) {
+                    path.lastSegment.point = event.point;
+                } else {
+                    path.add(event.point);
+                }
+            }
+        }
+
+        tool.onMouseUp = function(event) {
+            if (!isMoving && path) { // І тут перевіряємо isMoving
+                var endPoint = snapToEdge ? findNearestPoint(event.point) : event.point;
+                paths.push(path);
+                if (path.segments.length > 1) {
+                    path.lastSegment.point = endPoint;
+                }
+                path.simplify();
+            }
+        }
+
+        lineWidthInput.addEventListener('change', function() {
+            if (path) updateLineStyle(path);
+        });
+
+        lineColorInput.addEventListener('change', function() {
+            if (path) updateLineStyle(path);
+        });
+
+        lineStyleSelect.addEventListener('change', function() {
+            if (path) updateLineStyle(path);
+        });
+
+        paper.view.on('mousewheel', function(event) {
+            // Визначаємо масштаб: збільшуємо або зменшуємо
+            var zoom = event.deltaY < 0 ? 1.1 : 0.9;
+            paper.view.scale(zoom, event.point);
+
+            // Запобігаємо стандартній поведінці прокрутки сторінки
+            event.preventDefault();
+        });
+    </script>
+</body>
+</html>

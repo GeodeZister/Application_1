@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Scale Tool</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.11/paper-full.min.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <div class="dropdown">
+            <button class="dropbtn">Project</button>
+            <div class="dropdown-content">
+                <button id="newProjectButton">New Project</button>
+                <button id="loadJsonButton">Load Project</button>
+                <button id="exportSVGButton">Export as JPG</button>
+                <button id="exportJsonButton">Export JSON</button>
+                <input type="file" id="jsonFileInput" class="hidden" />
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">General</button>
+            <div class="dropdown-content">
+                <button id="loadImageButton">Load Image</button>
+                <button id="scalingButton">Scaling Tool</button>
+                <button id="setAngleButton">Set Angle</button>
+                <button id="rulerButton">Ruler Tool</button>
+                <button id="addCoordinatesButton">Add 0 coordinates</button>
+                <button id="toggleWayPointsButton">Toggle Way Points</button>
+            </div>
+
+        </div>
+        <button id="listParametersButton">List of Parameters</button>
+        <button id="viewWayPointsButton">List of Way Points</button>
+        <button id="viewSituationPointsButton">List of Situation Points</button>
+        <div class="dropdown">
+            <button class="dropbtn">Drawing</button>
+            <div class="dropdown-content">
+                <button id="drawLineButton">Draw Line</button>
+                <button id="drawWallButton">Draw Wall</button>
+                <button id="deleteVertexButton">Delete Vertex</button>
+                <button id="addWayPointButton">Add Way Points</button>
+            </div>
+
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">Objects</button>
+            <div class="dropdown-content">
+                <button id="elevatorButton">Elevator</button>
+                <button id="stairsButton">Stairs</button>
+                <button id="fireExtinguisherButton">Fire Extinguisher</button>
+                <button id="waterCoolerButton">WatterCuller</button>
+            </div>
+        </div>
+        <div class="dropdown">
+            <button class="dropbtn">Rooms</button>
+            <div class="dropdown-content">
+                <button id="drawRoomButton">Draw Room</button>
+                <button id="viewRoomsButton">View Rooms</button>
+            </div>
+        </div>
+
+        <label for="lineColor">Line Color:</label>
+        <input type="color" id="lineColor" name="lineColor" value="#ff0000">
+
+        <label for="lineWidth">Line Width:</label>
+        <input type="number" id="lineWidth" name="lineWidth" min="1" max="10" value="2">
+
+        <label>
+            <input type="checkbox" id="checkCoordinatesModeCheckbox">
+            Check Coordinates
+        </label>
+        <div id="localCoordinates">Local: X, Y</div>
+        <div id="pixelCoordinates">Pixels: X, Y</div>
+        <div id="angleDisplay">Directional Angle: N/A</div>
+    </div>
+
+    <div id="coordinatesDisplay" style="position: absolute; display: none; pointer-events: none; z-index: 100;"></div>
+
+    <div id="canvasContainer">
+        <canvas id="secondCanvas"></canvas>
+        <canvas id="imageCanvas"></canvas>
+
+    </div>
+
+
+
+    <div id="parametersModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Saved Parameters</h2>
+            <table id="parametersTable"></table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { InitialData } from './InitialData.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialData = new InitialData('imageCanvas', 'secondCanvas');
+        });
+    </script>
+</body>
+</html>

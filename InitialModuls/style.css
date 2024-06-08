@@ -1,0 +1,177 @@
+.navbar {
+    width: 100%;
+    background-color: #f2f2f2;
+    overflow: visible;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px; /* Space between navbar and canvas */
+}
+
+#rulerButton.active, #scalingButton.active {
+    background-color: #007bff;
+    color: black;
+}
+
+.navbar button, .navbar select {
+    margin: 0 10px;
+    padding: 8px 12px;
+    background-color: #ddd;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.navbar select {
+    margin-right: 20px;
+}
+
+#canvasContainer {
+    position: relative;
+    width: 100%;  /* Adjust width as necessary */
+    height: 500px; /* Adjust if necessary, ensure it's not collapsing */
+    margin: auto;
+    overflow: hidden; /* Keeps everything within bounds */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.navbar button.active, .tool-active {
+    background-color: #007bff; /* Blue background for active state */
+    color: black;
+}
+
+#logWindow {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px; /* Adjust height as needed */
+    overflow-y: scroll;
+    background: #f0f0f0;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+
+
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 50%; /* Початкова позиція по горизонталі */
+    top: 50%; /* Початкова позиція по вертикалі */
+    transform: translate(-50%, -70%); /* Зміщення на 50% від ширини та висоти */
+    width: 50%; /* Ширина модального вікна */
+    height: 60%; /* Висота модального вікна */
+    overflow: auto;
+    background-color: white; /* Білий фон */
+    border: 5px solid #000; /* Бордюр */
+}
+
+
+.modal-content {
+    width: 80%; /* Adjust modal width as needed */
+    margin: 15% auto; /* Centers the modal */
+    padding: 20px; /* Padding inside the modal */
+}
+
+
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.image_button {
+    margin: 0 10px; /* Залишаємо маржин, якщо потрібно */
+    padding: 0; /* Скасовуємо відступи */
+    background-color: transparent; /* Скасовуємо фон */
+    border: none; /* Скасовуємо бордюр */
+    cursor: pointer;
+}
+
+.image_button img {
+    width: 10px; /* Або будь-який інший розмір, що вам потрібен */
+    height: auto;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.tools-group {
+    margin-top: 5px;
+    display: none; /* Початково групи інструментів приховані */
+}
+
+.group-toggle {
+    margin: 5px 0;
+}
+
+/* Dropdown container */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    z-index: 1000;
+}
+
+/* Dropdown button */
+.dropbtn {
+    background-color: #4CAF50;
+    color: black;
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    border-radius: 15px;
+    margin: 0 10px;
+}
+
+/* Dropdown content (hidden by default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+/* Links inside the dropdown */
+.dropdown-content button {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.dropdown-content button:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+
+
+#imageCanvas, #secondCanvas {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    background-color: transparent; /* Ensures it doesn’t hide any underlying content */
+}
+
