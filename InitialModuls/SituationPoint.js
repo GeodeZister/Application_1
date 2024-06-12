@@ -1,4 +1,3 @@
-// SituationPoint.js
 export class SituationPoint {
     constructor(canvasId, scaleParameters) {
         this.canvas = document.getElementById(canvasId);
@@ -7,21 +6,27 @@ export class SituationPoint {
             paper.setup(this.canvas);
             this.situationPoints = [];
             this.isActive = false;
-            this.currentType = null; // Тип об'єкту, який додається
+            this.currentType = null; // Додана властивість для збереження типу ситуаційної точки
 
-            this.setupListeners();
+            this.boundClickHandler = this.handleClick.bind(this); // Зберігаємо прив'язаний обробник
         } else {
             console.error(`Canvas with id '${canvasId}' not found.`);
         }
     }
 
     setupListeners() {
-        this.canvas.addEventListener('click', (event) => {
-            if (!this.isActive || event.button !== 0 || !this.currentType) return; // Only proceed for left-click
+        this.canvas.addEventListener('click', this.boundClickHandler);
+    }
 
-            const point = new paper.Point(event.offsetX, event.offsetY);
-            this.addSituationPoint(point);
-        });
+    removeListeners() {
+        this.canvas.removeEventListener('click', this.boundClickHandler);
+    }
+
+    handleClick(event) {
+        if (!this.isActive || event.button !== 0 || !this.currentType) return; // Only proceed for left-click
+
+        const point = new paper.Point(event.offsetX, event.offsetY);
+        this.addSituationPoint(point);
     }
 
     setCurrentType(type) {
@@ -36,7 +41,8 @@ export class SituationPoint {
         return `${buildingID}${buildingLevel}${pointID}${typeInitial}`;
     }
 
-    drawSituationPoint(point, id) {
+    drawSituationPoint(point, id, type) {
+        this.currentType = type; // Встановлюємо тип для поточного завантаження
         const situationPointID = id || this.generateSituationPointID();
         const icon = this.getIconForType(this.currentType);
 
@@ -49,13 +55,12 @@ export class SituationPoint {
             }
         });
 
-        // Перевірка, чи точка вже існує, щоб уникнути дублювання
         const existingSituationPoint = this.situationPoints.find(sp => sp.id === situationPointID);
         if (!existingSituationPoint) {
             this.situationPoints.push({ id: situationPointID, type: this.currentType, x: point.x, y: point.y, point: raster });
             console.log(`Added situation point ID: ${situationPointID}, Type: ${this.currentType}, Coordinates: (${point.x}, ${point.y})`);
         } else {
-            existingSituationPoint.point = raster; // Оновлюємо зображення існуючої точки
+            existingSituationPoint.point = raster; // Update existing point image
         }
         paper.view.update();
     }
@@ -137,8 +142,17 @@ export class SituationPoint {
         return svg;
     }
 
-    addSituationPoint(point, id = null) {
-        this.drawSituationPoint(point, id);
+    addSituationPoint(point, id = null, type = null) {
+        if (type) {
+            this.setCurrentType(type);
+        }
+
+        if (!this.currentType) {
+            console.error('Current type for situation point is not set.');
+            return;
+        }
+
+        this.drawSituationPoint(point, id, this.currentType);
     }
 
     getSituationPoints() {
@@ -152,13 +166,15 @@ export class SituationPoint {
 
     activate(type) {
         this.isActive = true;
-        this.setCurrentType(type);
+        this.currentType = type;
+        this.setupListeners();
         console.log(`${type} tool activated`);
     }
 
     deactivate() {
         this.isActive = false;
         this.currentType = null;
+        this.removeListeners();
         console.log('Situation Point tool deactivated');
     }
 

@@ -1,10 +1,12 @@
 // ExportData.js
 export class ExportData {
-    constructor(canvasId, scaleParameters, wayPoint, drawing) {
+    constructor(canvasId, scaleParameters, wayPoint, drawing, situationPoint, roomManager) {
         this.canvas = document.getElementById(canvasId);
         this.scaleParameters = scaleParameters;
         this.wayPoint = wayPoint;
-        this.drawing = drawing; // Ensure drawing is properly assigned
+        this.drawing = drawing;
+        this.situationPoint = situationPoint;
+        this.roomManager = roomManager;
         if (!this.canvas) {
             console.error(`Canvas with id '${canvasId}' not found.`);
             return;
@@ -83,12 +85,16 @@ export class ExportData {
         const boundingBoxParams = this.scaleParameters.getBoundingBoxParameters();
         const coordinatesData = this.scaleParameters.getCoordinates();
         const wayPoints = this.wayPoint.getWayPoints();
+        const situationPoints = this.situationPoint.getSituationPoints();
+        const rooms = this.roomManager.getRooms();
 
         const exportData = {
             projectData,
             boundingBoxParams,
             coordinatesData,
             wayPoints,
+            situationPoints,
+            rooms,
             originPosition: this.scaleParameters.getOriginPosition(),
             scale: this.scaleParameters.getScale(),
             measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling(),
@@ -109,16 +115,21 @@ export class ExportData {
     }
 
     loadProject(projectData) {
-        if (this.scaleParameters) {
-            const scaleParameters = this.scaleParameters;
+        if (this.initialData && this.initialData.scaleParameters) {
+            const scaleParameters = this.initialData.scaleParameters;
 
             scaleParameters.setProjectData(projectData.projectData);
             scaleParameters.setBoundingBoxParameters(projectData.boundingBoxParams);
-            scaleParameters.setScale(projectData.scale || 1);
-            scaleParameters.setMeasuredPixelDistanceForScaling(projectData.measuredPixelDistanceForScaling);
-            scaleParameters.setRealDistance(projectData.realDistance);
-            scaleParameters.setScaleRatio(projectData.scaleRatio);
-            scaleParameters.setDirectionalAngle(projectData.directionalAngle);
+
+            if (projectData.scaleParameters) {
+                scaleParameters.setScaleParameters({
+                    scale: projectData.scaleParameters.scale,
+                    measuredPixelDistanceForScaling: projectData.scaleParameters.measuredPixelDistanceForScaling,
+                    realDistance: projectData.scaleParameters.realDistance,
+                    scaleRatio: projectData.scaleParameters.scaleRatio,
+                    rotationAngle: projectData.scaleParameters.rotationAngle
+                });
+            }
 
             projectData.coordinatesData.forEach(coord => {
                 scaleParameters.addCoordinates(coord.inputXY, coord.positionXY);
@@ -130,6 +141,7 @@ export class ExportData {
                 this.initialData.coordinateSystem.drawPointOrigin(originPosition.x, originPosition.y);
             }
 
+            this.rasterURL = projectData.projectData.rasterURL;
             this.initialData.loadImage(() => {
                 this.initialData.redrawAllElements();
 
@@ -139,11 +151,40 @@ export class ExportData {
                     this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
                 });
 
+                // Load situation points
+                projectData.situationPoints.forEach(situationPointData => {
+                    const point = new paper.Point(situationPointData.x, situationPointData.y);
+                    this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
+                });
+
+                // Load rooms
+                if (projectData.rooms) {
+                    projectData.rooms.forEach(roomData => {
+                        const vertices = roomData.vertices.map(v => new paper.Point(v.x, v.y));
+                        this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
+                    });
+                }
+
                 console.log('Project loaded successfully from file:', projectData);
             });
         } else {
             console.error('ScaleParameters is not available in initialData.');
         }
+    }
+
+    redrawAllElements() {
+        this.wayPoint.getWayPoints().forEach(wayPoint => {
+            this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
+        });
+
+        this.situationPoint.getSituationPoints().forEach(situationPoint => {
+            this.situationPoint.drawSituationPoint(new paper.Point(situationPoint.x, situationPoint.y), situationPoint.id);
+        });
+
+        this.roomManager.getRooms().forEach(room => {
+            const vertices = room.vertices.map(v => new paper.Point(v.x, v.y));
+            this.roomManager.addRoom(vertices, room.name, room.id);
+        });
     }
 
     getImageUrl() {

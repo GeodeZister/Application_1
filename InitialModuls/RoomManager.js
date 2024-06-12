@@ -9,7 +9,7 @@ export class RoomManager {
             this.currentPolygon = null;
             this.currentVertices = [];
             this.tempLine = null;
-            this.vertexSnapDistance = 10; // Відстань прив'язки до існуючої вершини
+            this.vertexSnapDistance = 10;
 
             this.setupListeners();
         } else {
@@ -27,9 +27,9 @@ export class RoomManager {
 
         const point = this.getMousePosition(event);
 
-        if (event.button === 0) { // Ліва кнопка миші
+        if (event.button === 0) {
             this.addVertex(point);
-        } else if (event.button === 2) { // Права кнопка миші
+        } else if (event.button === 2) {
             this.finishPolygon();
         }
     }
@@ -57,7 +57,7 @@ export class RoomManager {
                 strokeColor: 'black',
                 strokeWidth: 2,
                 closed: false,
-                fillColor: new paper.Color(1, 1, 0, 0.5) // Жовтий прозорий колір
+                fillColor: new paper.Color(1, 1, 0, 0.5)
             });
             this.currentVertices = [];
         }
@@ -114,7 +114,8 @@ export class RoomManager {
                 this.rooms.push({
                     id: roomID,
                     name: roomName,
-                    vertices: this.currentVertices
+                    vertices: this.currentVertices,
+                    polygon: this.currentPolygon
                 });
 
                 this.labelRoom(this.currentPolygon, roomName);
@@ -155,6 +156,28 @@ export class RoomManager {
 
     getRooms() {
         return this.rooms;
+    }
+
+    addRoom(vertices, name, id) {
+        console.log(`addRoom called with vertices:`, vertices, `name: ${name}, id: ${id}`);
+        const polygon = new paper.Path({
+            segments: vertices,
+            strokeColor: 'black',
+            strokeWidth: 2,
+            closed: true,
+            fillColor: new paper.Color(1, 1, 0, 0.5)
+        });
+
+        this.rooms.push({
+            id: id || this.generateRoomID(),
+            name: name,
+            vertices: vertices,
+            polygon: polygon
+        });
+
+        this.labelRoom(polygon, name);
+        console.log(`Loaded room ID: ${id}, Name: ${name}, Vertices:`, vertices);
+        paper.view.update();
     }
 
     activate() {
@@ -225,5 +248,12 @@ export class RoomManager {
         modal.appendChild(closeButton);
 
         document.body.appendChild(modal);
+    }
+
+    toggleRoomsVisibility() {
+        this.rooms.forEach(room => {
+            room.polygon.visible = !room.polygon.visible;
+        });
+        paper.view.update();
     }
 }

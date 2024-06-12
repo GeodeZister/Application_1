@@ -33,16 +33,17 @@ export class InitialData {
         this.scaleParameters = new ScaleParameters();
         this.projectManager = new ProjectManager(this);
 
+        this.drawing = new Drawing(this.imageCanvas, this.scaleParameters.getBoundingBoxParameters());
+        this.situationPoint = new SituationPoint(imageCanvasId, this.scaleParameters);
+        this.roomManager = new RoomManager(imageCanvasId, this.scaleParameters);
+
         this.scalingTool = new ScalingTool(this.imageCanvas, this.log.bind(this), this.scaleParameters, this.redrawImage.bind(this));
         this.rulerTool = new RulerTool(this.imageCanvas, this.log.bind(this));
         this.coordinateSystem = new CoordinateSystem(this.imageCanvas, this.log.bind(this), this.scaleParameters);
         this.wayPoint = new WayPoint(imageCanvasId, this.scaleParameters);
-        this.exportData = new ExportData(imageCanvasId, this.scaleParameters, this.wayPoint);
+        this.exportData = new ExportData(imageCanvasId, this.scaleParameters, this.wayPoint, this.drawing, this.situationPoint, this.roomManager);
         this.angleDetection = new AngleDetection(imageCanvasId, this.scaleParameters);
-        this.situationPoint = new SituationPoint(imageCanvasId, this.scaleParameters);
-        this.roomManager = new RoomManager(imageCanvasId, this.scaleParameters);
 
-        this.drawing = null;
         this.deleteTool = null;
 
         this.setupListeners();
@@ -65,9 +66,18 @@ export class InitialData {
         });
 
         document.getElementById('addWayPointButton').addEventListener('click', () => {
-            this.activateTool(this.wayPoint, this.wayPoint.activate, "Way Point tool activated.");
+            if (this.currentTool === this.wayPoint) {
+                this.deactivateTool();
+                this.log("Way Point tool deactivated.");
+            } else {
+                this.activateTool(this.wayPoint, this.wayPoint.activate, "Way Point tool activated.");
+            }
         });
 
+        document.getElementById('toggleRoomsButton').addEventListener('click', () => {
+            this.roomManager.toggleRoomsVisibility();
+            this.log(`Rooms ${this.roomManager.rooms[0].visible ? 'shown' : 'hidden'}.`);
+        });
 
 
         document.getElementById('viewWayPointsButton').addEventListener('click', () => this.createWayPointsTable());
@@ -93,23 +103,42 @@ export class InitialData {
         });
 
         document.getElementById('elevatorButton').addEventListener('click', () => {
-            this.situationPoint.activate('elevator');
-            this.log('Elevator tool activated.');
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+                this.deactivateTool();
+                this.log("Elevator tool deactivated.");
+            } else {
+                this.situationPoint.activate('elevator');
+                this.activateTool(this.situationPoint, null, "Elevator tool activated.");
+            }
         });
 
         document.getElementById('stairsButton').addEventListener('click', () => {
-            this.situationPoint.activate('stairs');
-            this.log('Stairs tool activated.');
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+                this.deactivateTool();
+                this.log("Stairs tool deactivated.");
+            } else {
+                this.situationPoint.activate('stairs');
+                this.activateTool(this.situationPoint, null, "Stairs tool activated.");
+            }
         });
 
         document.getElementById('fireExtinguisherButton').addEventListener('click', () => {
-            this.situationPoint.activate('fireExtinguisher');
-            this.log('Fire Extinguisher tool activated.');
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+                this.deactivateTool();
+                this.log("Fire Extinguisher tool deactivated.");
+            } else {
+                this.situationPoint.activate('fireExtinguisher');
+                this.activateTool(this.situationPoint, null, "Fire Extinguisher tool activated.");
+            }
         });
-
         document.getElementById('waterCoolerButton').addEventListener('click', () => {
-            this.situationPoint.activate('waterCooler');
-            this.log('Water Cooler tool activated.');
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+                this.deactivateTool();
+                this.log("Water Cooler tool deactivated.");
+            } else {
+                this.situationPoint.activate('waterCooler');
+                this.activateTool(this.situationPoint, null, "Water Cooler tool activated.");
+            }
         });
 
 
@@ -177,7 +206,7 @@ export class InitialData {
     }
 
     activateTool(tool, activateMethod, logMessage) {
-        if (this.currentTool) {
+        if (this.currentTool && this.currentTool !== tool) {
             this.currentTool.deactivate();
         }
         this.currentTool = tool;
@@ -190,7 +219,7 @@ export class InitialData {
     }
 
     deactivateTool() {
-        if (this.currentTool && this.currentTool !== this.wayPoint) {
+        if (this.currentTool) {
             this.currentTool.deactivate();
             this.currentTool = null;
         }
@@ -409,12 +438,22 @@ export class InitialData {
 
         document.body.appendChild(modal);
     }
-
     redrawAllElements() {
         this.wayPoint.getWayPoints().forEach(wayPoint => {
             this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
         });
+
+        this.situationPoint.getSituationPoints().forEach(situationPoint => {
+            this.situationPoint.drawSituationPoint(new paper.Point(situationPoint.x, situationPoint.y), situationPoint.id, situationPoint.type);
+        });
+
+        this.roomManager.getRooms().forEach(room => {
+            const vertices = room.vertices.map(v => new paper.Point(v.x, v.y));
+            this.roomManager.addRoom(vertices, room.name, room.id);
+        });
     }
+
+
 
     redrawImage() {
         if (!this.imageCtx) {

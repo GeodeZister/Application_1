@@ -1,12 +1,17 @@
 export class ProjectManager {
     constructor(initialData) {
         this.initialData = initialData;
-        this.rasterURL = null; // Ініціалізуємо властивість для збереження URL
+        this.rasterURL = null;
         this.setupListeners();
     }
 
     setupListeners() {
-        document.getElementById('newProjectButton').addEventListener('click', () => this.showProjectCreationForm());
+        const newProjectButton = document.getElementById('newProjectButton');
+        if (newProjectButton) {
+            newProjectButton.addEventListener('click', () => this.showProjectCreationForm());
+        } else {
+            console.error("Button with id 'newProjectButton' not found.");
+        }
     }
 
     showProjectCreationForm() {
@@ -67,7 +72,6 @@ export class ProjectManager {
             return;  // Keep the modal open for correction
         }
 
-        // Зберігаємо URL у класі ProjectManager
         this.rasterURL = rasterURL;
 
         const projectData = { projectName, buildingID, buildingLevel, rasterURL };
@@ -78,7 +82,7 @@ export class ProjectManager {
     createProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             this.initialData.scaleParameters.setProjectData(projectData);
-            console.log(`Project created successfully with data:`, projectData);
+            console.log('Project created successfully with data:', projectData);
         } else {
             console.error('ScaleParameters is not available in initialData.');
         }
@@ -89,19 +93,28 @@ export class ProjectManager {
         input.type = 'file';
         input.accept = '.json';
 
-        input.addEventListener('change', (event) => {
+        input.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const projectData = JSON.parse(e.target.result);
+                try {
+                    const projectData = await this.readFileAsJson(file);
                     this.loadProject(projectData);
-                };
-                reader.readAsText(file);
+                } catch (error) {
+                    console.error('Error loading project from file:', error);
+                }
             }
         });
 
         input.click();
+    }
+
+    async readFileAsJson(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(JSON.parse(e.target.result));
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
     }
 
     loadProject(projectData) {
@@ -110,12 +123,16 @@ export class ProjectManager {
 
             scaleParameters.setProjectData(projectData.projectData);
             scaleParameters.setBoundingBoxParameters(projectData.boundingBoxParams);
-            scaleParameters.setScaleParameters({
-                scale: projectData.scale,
-                measuredPixelDistanceForScaling: projectData.measuredPixelDistanceForScaling,
-                realDistance: projectData.realDistance,
-                scaleRatio: projectData.scaleRatio
-            });
+
+            if (projectData.scaleParameters) {
+                scaleParameters.setScaleParameters({
+                    scale: projectData.scaleParameters.scale,
+                    measuredPixelDistanceForScaling: projectData.scaleParameters.measuredPixelDistanceForScaling,
+                    realDistance: projectData.scaleParameters.realDistance,
+                    scaleRatio: projectData.scaleParameters.scaleRatio,
+                    rotationAngle: projectData.scaleParameters.rotationAngle
+                });
+            }
 
             projectData.coordinatesData.forEach(coord => {
                 scaleParameters.addCoordinates(coord.inputXY, coord.positionXY);
@@ -131,11 +148,28 @@ export class ProjectManager {
             this.initialData.loadImage(() => {
                 this.initialData.redrawAllElements();
 
-                // Load waypoints after the image is loaded and elements are redrawn
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
                     this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
                 });
+
+                if (projectData.situationPoints) {
+                    projectData.situationPoints.forEach(situationPointData => {
+                        const point = new paper.Point(situationPointData.x, situationPointData.y);
+                        this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
+                        console.log('Loaded situation point:', JSON.stringify(situationPointData));
+                    });
+                }
+
+                if (projectData.rooms) {
+                    projectData.rooms.forEach(roomData => {
+                        // Логування даних для перевірки
+                        console.log('Room data:', roomData);
+                        const vertices = roomData.vertices.map(v => new paper.Point(v[1], v[2]));
+                        this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
+                        console.log('Loaded room:', JSON.stringify(roomData));
+                    });
+                }
 
                 console.log('Project loaded successfully from file:', projectData);
             });
@@ -143,7 +177,6 @@ export class ProjectManager {
             console.error('ScaleParameters is not available in initialData.');
         }
     }
-
 
     getImageUrl() {
         return this.rasterURL;

@@ -1,4 +1,3 @@
-// WayPoint.js
 export class WayPoint {
     constructor(canvasId, scaleParameters) {
         this.canvas = document.getElementById(canvasId);
@@ -9,26 +8,35 @@ export class WayPoint {
             this.isActive = false;
             this.isVisible = true; // Додана властивість для видимості точок
 
-            this.setupListeners();
+            this.boundClickHandler = this.handleClick.bind(this); // Зберігаємо прив'язаний обробник
+            this.boundContextMenuHandler = this.handleContextMenu.bind(this); // Зберігаємо прив'язаний обробник
         } else {
             console.error(`Canvas with id '${canvasId}' not found.`);
         }
     }
 
     setupListeners() {
-        this.canvas.addEventListener('click', (event) => {
-            if (!this.isActive || event.button !== 0) return; // Only proceed for left-click
+        this.canvas.addEventListener('click', this.boundClickHandler);
+        this.canvas.addEventListener('contextmenu', this.boundContextMenuHandler);
+    }
 
-            const point = new paper.Point(event.offsetX, event.offsetY);
-            this.addWayPoint(point);
-        });
+    removeListeners() {
+        this.canvas.removeEventListener('click', this.boundClickHandler);
+        this.canvas.removeEventListener('contextmenu', this.boundContextMenuHandler);
+    }
 
-        this.canvas.addEventListener('contextmenu', (event) => {
-            if (!this.isActive) return;
+    handleClick(event) {
+        if (!this.isActive || event.button !== 0) return; // Only proceed for left-click
 
-            event.preventDefault(); // Prevent the context menu from appearing
-            this.removeLastWayPoint();
-        });
+        const point = new paper.Point(event.offsetX, event.offsetY);
+        this.addWayPoint(point);
+    }
+
+    handleContextMenu(event) {
+        if (!this.isActive) return;
+
+        event.preventDefault(); // Prevent the context menu from appearing
+        this.removeLastWayPoint();
     }
 
     generateWayPointID() {
@@ -113,11 +121,13 @@ export class WayPoint {
 
     activate() {
         this.isActive = true;
+        this.setupListeners();
         console.log('Way Point tool activated');
     }
 
     deactivate() {
         this.isActive = false;
+        this.removeListeners();
         console.log('Way Point tool deactivated');
     }
 
