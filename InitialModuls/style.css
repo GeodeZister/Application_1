@@ -19,6 +19,8 @@ body {
     padding: 10px 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px; /* Space between navbar and canvas */
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .navbar button, .navbar select {
@@ -164,6 +166,7 @@ body {
     z-index: 1;
     opacity: 0;
     transition: opacity 0.3s ease;
+    margin-top: 10px;
 }
 
 .dropdown-content button {
@@ -275,6 +278,11 @@ input[type="color"]::-moz-color-swatch {
         width: 16px;
         height: 16px;
     }
+
+    .dropdown-content {
+        position: relative;
+        margin-top: 0;
+    }
 }
 
 @media (max-width: 480px) {
@@ -305,5 +313,10 @@ input[type="color"]::-moz-color-swatch {
         top: 5px;
         width: 15px;
         height: 15px;
+    }
+
+    .dropdown-content {
+        position: relative;
+        margin-top: 0;
     }
 }
