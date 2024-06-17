@@ -84,7 +84,7 @@ body {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 1001;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
@@ -163,7 +163,7 @@ body {
     background-color: #f9f9f9;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
+    z-index: 1000; /* Increased z-index to ensure it is above other elements */
     opacity: 0;
     transition: opacity 0.3s ease;
     margin-top: 10px;
@@ -280,8 +280,9 @@ input[type="color"]::-moz-color-swatch {
     }
 
     .dropdown-content {
-        position: relative;
+        position: absolute; /* Ensure dropdown menu is positioned correctly */
         margin-top: 0;
+        z-index: 1001; /* Ensure dropdown is above other elements */
     }
 }
 
@@ -316,7 +317,8 @@ input[type="color"]::-moz-color-swatch {
     }
 
     .dropdown-content {
-        position: relative;
+        position: absolute; /* Ensure dropdown menu is positioned correctly */
         margin-top: 0;
+        z-index: 1001; /* Ensure dropdown is above other elements */
     }
 }
