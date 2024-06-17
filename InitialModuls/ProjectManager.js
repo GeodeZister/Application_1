@@ -117,6 +117,7 @@ export class ProjectManager {
         });
     }
 
+    // ProjectManager.js
     loadProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             const scaleParameters = this.initialData.scaleParameters;
@@ -124,14 +125,25 @@ export class ProjectManager {
             scaleParameters.setProjectData(projectData.projectData);
             scaleParameters.setBoundingBoxParameters(projectData.boundingBoxParams);
 
-            if (projectData.scaleParameters) {
-                scaleParameters.setScaleParameters({
-                    scale: projectData.scaleParameters.scale,
-                    measuredPixelDistanceForScaling: projectData.scaleParameters.measuredPixelDistanceForScaling,
-                    realDistance: projectData.scaleParameters.realDistance,
-                    scaleRatio: projectData.scaleParameters.scaleRatio,
-                    rotationAngle: projectData.scaleParameters.rotationAngle
-                });
+            if (projectData.scale) {
+                scaleParameters.setScale(projectData.scale);
+                console.log("Scale set to:", projectData.scale);
+            }
+            if (projectData.measuredPixelDistanceForScaling) {
+                scaleParameters.setMeasuredPixelDistanceForScaling(projectData.measuredPixelDistanceForScaling);
+                console.log("Measured Pixel Distance for Scaling set to:", projectData.measuredPixelDistanceForScaling);
+            }
+            if (projectData.realDistance) {
+                scaleParameters.setRealDistance(projectData.realDistance);
+                console.log("Real Distance set to:", projectData.realDistance);
+            }
+            if (projectData.scaleRatio) {
+                scaleParameters.setScaleRatio(projectData.scaleRatio);
+                console.log("Scale Ratio set to:", projectData.scaleRatio);
+            }
+            if (projectData.directionalAngle) {
+                scaleParameters.setDirectionalAngle(projectData.directionalAngle);
+                console.log("Directional Angle set to:", projectData.directionalAngle);
             }
 
             projectData.coordinatesData.forEach(coord => {
@@ -157,26 +169,28 @@ export class ProjectManager {
                     projectData.situationPoints.forEach(situationPointData => {
                         const point = new paper.Point(situationPointData.x, situationPointData.y);
                         this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
-                        console.log('Loaded situation point:', JSON.stringify(situationPointData));
                     });
                 }
 
                 if (projectData.rooms) {
                     projectData.rooms.forEach(roomData => {
-                        // Логування даних для перевірки
-                        console.log('Room data:', roomData);
-                        const vertices = roomData.vertices.map(v => new paper.Point(v[1], v[2]));
+                        const vertices = roomData.vertices.map(v => new paper.Point(v.x, v.y));
                         this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
-                        console.log('Loaded room:', JSON.stringify(roomData));
                     });
                 }
 
                 console.log('Project loaded successfully from file:', projectData);
+
+                // Оновлення таблиці параметрів після завантаження проекту
+                const data = this.initialData.collectParametersData();
+                const parametersTable = document.getElementById('parametersTable');
+                this.initialData.updateParametersTable(parametersTable, data);
             });
         } else {
             console.error('ScaleParameters is not available in initialData.');
         }
     }
+
 
     getImageUrl() {
         return this.rasterURL;

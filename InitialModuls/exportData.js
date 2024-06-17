@@ -114,6 +114,7 @@ export class ExportData {
         linkElement.click();
     }
 
+
     loadProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             const scaleParameters = this.initialData.scaleParameters;
@@ -121,14 +122,20 @@ export class ExportData {
             scaleParameters.setProjectData(projectData.projectData);
             scaleParameters.setBoundingBoxParameters(projectData.boundingBoxParams);
 
-            if (projectData.scaleParameters) {
-                scaleParameters.setScaleParameters({
-                    scale: projectData.scaleParameters.scale,
-                    measuredPixelDistanceForScaling: projectData.scaleParameters.measuredPixelDistanceForScaling,
-                    realDistance: projectData.scaleParameters.realDistance,
-                    scaleRatio: projectData.scaleParameters.scaleRatio,
-                    rotationAngle: projectData.scaleParameters.rotationAngle
-                });
+            if (projectData.scale) {
+                scaleParameters.setScale(projectData.scale);
+            }
+            if (projectData.measuredPixelDistanceForScaling) {
+                scaleParameters.setMeasuredPixelDistanceForScaling(projectData.measuredPixelDistanceForScaling);
+            }
+            if (projectData.realDistance) {
+                scaleParameters.setRealDistance(projectData.realDistance);
+            }
+            if (projectData.scaleRatio) {
+                scaleParameters.setScaleRatio(projectData.scaleRatio);
+            }
+            if (projectData.directionalAngle) {
+                scaleParameters.setDirectionalAngle(projectData.directionalAngle);
             }
 
             projectData.coordinatesData.forEach(coord => {
@@ -145,23 +152,24 @@ export class ExportData {
             this.initialData.loadImage(() => {
                 this.initialData.redrawAllElements();
 
-                // Load waypoints after the image is loaded and elements are redrawn
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
                     this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
                 });
 
-                // Load situation points
-                projectData.situationPoints.forEach(situationPointData => {
-                    const point = new paper.Point(situationPointData.x, situationPointData.y);
-                    this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
-                });
+                if (projectData.situationPoints) {
+                    projectData.situationPoints.forEach(situationPointData => {
+                        const point = new paper.Point(situationPointData.x, situationPointData.y);
+                        this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
+                        console.log(`Loaded situation point: ${JSON.stringify(situationPointData)}`);
+                    });
+                }
 
-                // Load rooms
                 if (projectData.rooms) {
                     projectData.rooms.forEach(roomData => {
                         const vertices = roomData.vertices.map(v => new paper.Point(v.x, v.y));
                         this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
+                        console.log(`Loaded room: ${JSON.stringify(roomData)}`);
                     });
                 }
 
@@ -171,6 +179,8 @@ export class ExportData {
             console.error('ScaleParameters is not available in initialData.');
         }
     }
+
+
 
     redrawAllElements() {
         this.wayPoint.getWayPoints().forEach(wayPoint => {

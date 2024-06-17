@@ -1,15 +1,24 @@
-.navbar {
-    width: 100%;
-    background-color: #f2f2f2;
-    overflow: visible;
-    padding: 10px 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px; /* Space between navbar and canvas */
+/* Основні стилі */
+* {
+    box-sizing: border-box;
 }
 
-#rulerButton.active, #scalingButton.active {
-    background-color: #007bff;
-    color: black;
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+/* Navbar styles */
+.navbar {
+    width: 100%;
+    background: linear-gradient(to right, #1f5c8d, #92c1e9);
+    overflow: visible;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px; /* Space between navbar and canvas */
 }
 
 .navbar button, .navbar select {
@@ -25,15 +34,9 @@
     margin-right: 20px;
 }
 
-#canvasContainer {
-    position: relative;
-    width: 100%;  /* Adjust width as necessary */
-    height: 500px; /* Adjust if necessary, ensure it's not collapsing */
-    margin: auto;
-    overflow: hidden; /* Keeps everything within bounds */
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#rulerButton.active, #scalingButton.active {
+    background-color: #007bff;
+    color: black;
 }
 
 .navbar button.active, .tool-active {
@@ -53,31 +56,48 @@
     box-sizing: border-box;
 }
 
+/* Canvas container styles */
+#canvasContainer {
+    position: relative;
+    width: 100%;  /* Adjust width as necessary */
+    height: 500px; /* Adjust if necessary, ensure it's not collapsing */
+    margin: auto;
+    overflow: hidden; /* Keeps everything within bounds */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
+#imageCanvas, #secondCanvas {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    background-color: transparent; /* Ensures it doesn’t hide any underlying content */
+    width: 100%;
+    height: 100%;
+}
 
-
+/* Modal styles */
 .modal {
     display: none;
     position: fixed;
     z-index: 1;
-    left: 50%; /* Початкова позиція по горизонталі */
-    top: 50%; /* Початкова позиція по вертикалі */
-    transform: translate(-50%, -70%); /* Зміщення на 50% від ширини та висоти */
-    width: 50%; /* Ширина модального вікна */
-    height: 60%; /* Висота модального вікна */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    height: 60%;
     overflow: auto;
-    background-color: white; /* Білий фон */
-    border: 5px solid #000; /* Бордюр */
+    background-color: white;
+    border: 5px solid #000;
 }
-
 
 .modal-content {
     width: 80%; /* Adjust modal width as needed */
     margin: 15% auto; /* Centers the modal */
     padding: 20px; /* Padding inside the modal */
 }
-
-
 
 .close {
     color: #aaa;
@@ -86,6 +106,14 @@
     font-weight: bold;
 }
 
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Button styles */
 .image_button {
     margin: 0 10px; /* Залишаємо маржин, якщо потрібно */
     padding: 0; /* Скасовуємо відступи */
@@ -99,13 +127,7 @@
     height: auto;
 }
 
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
+/* Tools group styles */
 .tools-group {
     margin-top: 5px;
     display: none; /* Початково групи інструментів приховані */
@@ -115,14 +137,13 @@
     margin: 5px 0;
 }
 
-/* Dropdown container */
+/* Dropdown styles */
 .dropdown {
     position: relative;
     display: inline-block;
     z-index: 1000;
 }
 
-/* Dropdown button */
 .dropbtn {
     background-color: #4CAF50;
     color: black;
@@ -134,7 +155,6 @@
     margin: 0 10px;
 }
 
-/* Dropdown content (hidden by default) */
 .dropdown-content {
     display: none;
     position: absolute;
@@ -142,9 +162,10 @@
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
-/* Links inside the dropdown */
 .dropdown-content button {
     color: black;
     padding: 12px 16px;
@@ -163,15 +184,126 @@
 
 .dropdown:hover .dropdown-content {
     display: block;
+    opacity: 1;
 }
 
+/* Color input styles */
+label.color-input {
+    display: inline-block;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    overflow: hidden;
+    margin: 0 10px; /* Maintain margin consistency */
+}
 
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    background: #fff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    outline: none;
+    cursor: inherit;
+}
 
-#imageCanvas, #secondCanvas {
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
+}
+
+input[type="color"]::-moz-focus-inner {
+    border: none;
+    padding: 0;
+    border-radius: 50%;
+}
+
+input[type="color"]::-moz-color-swatch {
+    border: none;
+    border-radius: 50%;
+    height: 20px;
+}
+
+.circle {
     position: absolute;
-    transform: translate(-50%, -50%);
-    left: 50%;
-    top: 50%;
-    background-color: transparent; /* Ensures it doesn’t hide any underlying content */
+    left: 5px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 50%;
+    cursor: inherit;
 }
 
+/* Media Queries for responsiveness */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .navbar button, .navbar select {
+        margin: 5px 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    #canvasContainer {
+        height: 300px; /* Adjust height for smaller screens */
+    }
+
+    label.color-input {
+        width: 30px;
+        height: 30px;
+    }
+
+    input[type="color"] {
+        width: 30px;
+        height: 30px;
+    }
+
+    .circle {
+        left: 7px;
+        top: 7px;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 5px;
+    }
+
+    .navbar button, .navbar select {
+        margin: 3px 0;
+    }
+
+    #canvasContainer {
+        height: 200px; /* Further adjust height for smaller screens */
+    }
+
+    label.color-input {
+        width: 25px;
+        height: 25px;
+    }
+
+    input[type="color"] {
+        width: 25px;
+        height: 25px;
+    }
+
+    .circle {
+        left: 5px;
+        top: 5px;
+        width: 15px;
+        height: 15px;
+    }
+}

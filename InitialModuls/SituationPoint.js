@@ -58,7 +58,7 @@ export class SituationPoint {
         const existingSituationPoint = this.situationPoints.find(sp => sp.id === situationPointID);
         if (!existingSituationPoint) {
             this.situationPoints.push({ id: situationPointID, type: this.currentType, x: point.x, y: point.y, point: raster });
-            console.log(`Added situation point ID: ${situationPointID}, Type: ${this.currentType}, Coordinates: (${point.x}, ${point.y})`);
+
         } else {
             existingSituationPoint.point = raster; // Update existing point image
         }

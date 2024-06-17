@@ -55,12 +55,24 @@ export class ScaleParameters {
         return this.measuredPixelDistanceForScaling;
     }
 
+    setMeasuredPixelDistanceForScaling(measuredPixelDistanceForScaling) {
+        this.measuredPixelDistanceForScaling = measuredPixelDistanceForScaling;
+    }
+
     getRealDistance() {
         return this.realDistance;
     }
 
+    setRealDistance(realDistance) {
+        this.realDistance = realDistance;
+    }
+
     getScaleRatio() {
         return this.scaleRatio;
+    }
+
+    setScaleRatio(scaleRatio) {
+        this.scaleRatio = scaleRatio;
     }
 
     // Method to calculate pixels per meter
@@ -84,6 +96,14 @@ export class ScaleParameters {
 
     getCoordinates() {
         return this.coordinatesList;
+    }
+
+    getDirectionalAngle() {
+        return this.directionalAngle;
+    }
+
+    setDirectionalAngle(directionalAngle) {
+        this.directionalAngle = directionalAngle;
     }
 
     // Methods for origin position
@@ -112,11 +132,5 @@ export class ScaleParameters {
     getBuildingLevel() {
         return this.projectData.buildingLevel;
     }
-    setDirectionalAngle(angle) {
-        this.directionalAngle = angle;
-    }
 
-    getDirectionalAngle() {
-        return this.directionalAngle;
-    }
 }

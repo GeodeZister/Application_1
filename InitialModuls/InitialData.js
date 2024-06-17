@@ -79,7 +79,6 @@ export class InitialData {
             this.log(`Rooms ${this.roomManager.rooms[0].visible ? 'shown' : 'hidden'}.`);
         });
 
-
         document.getElementById('viewWayPointsButton').addEventListener('click', () => this.createWayPointsTable());
 
         document.getElementById('drawLineButton').addEventListener('click', () => {
@@ -103,7 +102,7 @@ export class InitialData {
         });
 
         document.getElementById('elevatorButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'elevator') {
                 this.deactivateTool();
                 this.log("Elevator tool deactivated.");
             } else {
@@ -113,7 +112,7 @@ export class InitialData {
         });
 
         document.getElementById('stairsButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'stairs') {
                 this.deactivateTool();
                 this.log("Stairs tool deactivated.");
             } else {
@@ -123,7 +122,7 @@ export class InitialData {
         });
 
         document.getElementById('fireExtinguisherButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'fireExtinguisher') {
                 this.deactivateTool();
                 this.log("Fire Extinguisher tool deactivated.");
             } else {
@@ -131,8 +130,9 @@ export class InitialData {
                 this.activateTool(this.situationPoint, null, "Fire Extinguisher tool activated.");
             }
         });
+
         document.getElementById('waterCoolerButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive) {
+            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'waterCooler') {
                 this.deactivateTool();
                 this.log("Water Cooler tool deactivated.");
             } else {
@@ -140,7 +140,6 @@ export class InitialData {
                 this.activateTool(this.situationPoint, null, "Water Cooler tool activated.");
             }
         });
-
 
         document.getElementById('viewSituationPointsButton').addEventListener('click', () => this.situationPoint.createSituationPointsTable());
 
@@ -237,7 +236,7 @@ export class InitialData {
 
         listParametersButton.addEventListener('click', () => {
             const data = this.collectParametersData();
-            this.updateActiveButton(listParametersButton);
+            this.updateActiveButton(listParametersButton); // Переконайтеся, що цей метод існує
             parametersModal.style.display = 'block';
             this.updateParametersTable(parametersTable, data);
         });
@@ -253,33 +252,35 @@ export class InitialData {
                 listParametersButton.classList.remove('active');
             }
         });
+
     }
 
     collectParametersData() {
-        return {
-            scale: this.scaleParameters.getScale(),
-            measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling(),
-            realDistance: this.scaleParameters.getRealDistance(),
-            scaleRatio: this.scaleParameters.getScaleRatio(),
-            coordinatesData: this.scaleParameters.getCoordinates(),
-            boundingBoxParams: this.scaleParameters.getBoundingBoxParameters(),
-            projectData: this.scaleParameters.getProjectData(),
-            directionalAngle: this.scaleParameters.getDirectionalAngle() // Include directional angle
+        const data = {
+            scale: this.scaleParameters.getScale() || 'N/A',
+            measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling() || 'N/A',
+            realDistance: this.scaleParameters.getRealDistance() || 'N/A',
+            scaleRatio: this.scaleParameters.getScaleRatio() || 'N/A',
+            coordinatesData: this.scaleParameters.getCoordinates() || [],
+            boundingBoxParams: this.scaleParameters.getBoundingBoxParameters() || {},
+            projectData: this.scaleParameters.getProjectData() || {},
+            directionalAngle: this.scaleParameters.getDirectionalAngle() !== null ? this.scaleParameters.getDirectionalAngle().toFixed(2) : 'N/A'
         };
+
+        console.log('Collected Parameters Data:', data); // Додаємо логування
+
+        return data;
     }
 
-    updateActiveButton(button) {
-            document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-        }
+   updateParametersTable(parametersTable, data) {
+        console.log('Updating Parameters Table with:', data); // Додаємо логування
 
-        updateParametersTable(parametersTable, data) {
         const rows = [];
-        rows.push(`<tr><th>Scale</th><td>${data.scale || 'N/A'}</td></tr>`);
-        rows.push(`<tr><th>Measured Pixel Distance for Scaling</th><td>${data.measuredPixelDistanceForScaling || 'N/A'}</td></tr>`);
-        rows.push(`<tr><th>Real Distance</th><td>${data.realDistance || 'N/A'}</td></tr>`);
-        rows.push(`<tr><th>Scale Ratio</th><td>${data.scaleRatio || 'N/A'}</td></tr>`);
-        rows.push(`<tr><th>Directional Angle</th><td>${data.directionalAngle !== null ? `${data.directionalAngle.toFixed(2)}°` : 'N/A'}</td></tr>`); // New row for angle
+        rows.push(`<tr><th>Scale</th><td>${data.scale}</td></tr>`);
+        rows.push(`<tr><th>Measured Pixel Distance for Scaling</th><td>${data.measuredPixelDistanceForScaling}</td></tr>`);
+        rows.push(`<tr><th>Real Distance</th><td>${data.realDistance}</td></tr>`);
+        rows.push(`<tr><th>Scale Ratio</th><td>${data.scaleRatio}</td></tr>`);
+        rows.push(`<tr><th>Directional Angle</th><td>${data.directionalAngle !== 'N/A' ? `${data.directionalAngle}°` : 'N/A'}</td></tr>`);
 
         data.coordinatesData.forEach((coord, index) => {
             rows.push(`<tr><th>Coord ${index + 1} Input</th><td>(${coord.inputXY.x}, ${coord.inputXY.y})</td></tr>`);
@@ -299,6 +300,11 @@ export class InitialData {
         }
 
         parametersTable.innerHTML = rows.join('');
+    }
+
+    updateActiveButton(button) {
+        document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
     }
 
 
