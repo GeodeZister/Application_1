@@ -117,7 +117,6 @@ export class ProjectManager {
         });
     }
 
-    // ProjectManager.js
     loadProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             const scaleParameters = this.initialData.scaleParameters;
@@ -174,7 +173,8 @@ export class ProjectManager {
 
                 if (projectData.rooms) {
                     projectData.rooms.forEach(roomData => {
-                        const vertices = roomData.vertices.map(v => new paper.Point(v.x, v.y));
+                        // Переконайтеся, що координати мають правильний формат
+                        const vertices = roomData.vertices.map(v => new paper.Point(v[1], v[2]));
                         this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
                     });
                 }
