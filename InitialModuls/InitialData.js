@@ -165,13 +165,17 @@ export class InitialData {
 
         document.addEventListener('contextmenu', (event) => event.preventDefault());
 
-        document.getElementById('checkCoordinatesModeCheckbox').addEventListener('change', (event) => {
-            if (event.target.checked) {
+        document.getElementById('checkCoordinatesButton').addEventListener('click', () => {
+            const button = document.getElementById('checkCoordinatesButton');
+            if (!button.classList.contains('active')) {
+                button.classList.add('active');
                 this.coordinateSystem.activateCheckCoordinates();
             } else {
+                button.classList.remove('active');
                 this.coordinateSystem.deactivateCheckCoordinates();
             }
         });
+
 
         document.getElementById('addCoordinatesButton').addEventListener('click', () => {
             this.activateTool(this.coordinateSystem, this.coordinateSystem.activate, null);
