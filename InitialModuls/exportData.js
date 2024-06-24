@@ -1,4 +1,5 @@
-// ExportData.js
+import { Graph } from './Graph.js';
+
 export class ExportData {
     constructor(canvasId, scaleParameters, wayPoint, drawing, situationPoint, roomManager) {
         this.canvas = document.getElementById(canvasId);
@@ -7,6 +8,7 @@ export class ExportData {
         this.drawing = drawing;
         this.situationPoint = situationPoint;
         this.roomManager = roomManager;
+        this.graph = new Graph();
         if (!this.canvas) {
             console.error(`Canvas with id '${canvasId}' not found.`);
             return;
@@ -80,13 +82,26 @@ export class ExportData {
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
     }
 
+    collectGraphData() {
+        const wayPoints = this.wayPoint.getWayPoints();
+        const situationPoints = this.situationPoint.getSituationPoints();
+        this.graph.collectPoints(wayPoints, situationPoints);
+    }
+
     exportAsJson() {
         const projectData = this.scaleParameters.getProjectData();
         const boundingBoxParams = this.scaleParameters.getBoundingBoxParameters();
         const coordinatesData = this.scaleParameters.getCoordinates();
-        const wayPoints = this.wayPoint.getWayPoints();
+        const wayPoints = this.wayPoint.getWayPoints().map(wp => ({
+            id: wp.id,
+            x: wp.x,
+            y: wp.y,
+            description: wp.description // Додаємо опис
+        }));
         const situationPoints = this.situationPoint.getSituationPoints();
         const rooms = this.roomManager.getRooms();
+
+        this.collectGraphData();
 
         const exportData = {
             projectData,
@@ -95,6 +110,10 @@ export class ExportData {
             wayPoints,
             situationPoints,
             rooms,
+            graph: {
+                nodes: this.graph.points,
+                edges: this.graph.edges
+            },
             originPosition: this.scaleParameters.getOriginPosition(),
             scale: this.scaleParameters.getScale(),
             measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling(),
@@ -114,7 +133,6 @@ export class ExportData {
         linkElement.click();
     }
 
-
     loadProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             const scaleParameters = this.initialData.scaleParameters;
@@ -122,6 +140,7 @@ export class ExportData {
             scaleParameters.setProjectData(projectData.projectData);
             scaleParameters.setBoundingBoxParameters(projectData.boundingBoxParams);
 
+            // Завантажуємо параметри
             if (projectData.scale) {
                 scaleParameters.setScale(projectData.scale);
             }
@@ -154,7 +173,7 @@ export class ExportData {
 
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
-                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
+                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id, wayPointData.description); // Додаємо опис
                 });
 
                 if (projectData.situationPoints) {
@@ -180,15 +199,13 @@ export class ExportData {
         }
     }
 
-
-
     redrawAllElements() {
         this.wayPoint.getWayPoints().forEach(wayPoint => {
-            this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
+            this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id, wayPoint.description); // Додаємо опис
         });
 
         this.situationPoint.getSituationPoints().forEach(situationPoint => {
-            this.situationPoint.drawSituationPoint(new paper.Point(situationPoint.x, situationPoint.y), situationPoint.id);
+            this.situationPoint.drawSituationPoint(new paper.Point(situationPoint.x, situationPoint.y), situationPoint.id, situationPoint.type);
         });
 
         this.roomManager.getRooms().forEach(room => {

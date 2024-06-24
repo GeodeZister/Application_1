@@ -161,7 +161,7 @@ export class ProjectManager {
 
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
-                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
+                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id, wayPointData.description);
                 });
 
                 if (projectData.situationPoints) {

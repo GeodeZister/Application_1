@@ -2,14 +2,16 @@ export class WayPoint {
     constructor(canvasId, scaleParameters) {
         this.canvas = document.getElementById(canvasId);
         this.scaleParameters = scaleParameters;
+
         if (this.canvas) {
             paper.setup(this.canvas);
             this.wayPoints = [];
             this.isActive = false;
-            this.isVisible = true; // Додана властивість для видимості точок
+            this.isVisible = true;
+            this.isEditMode = false;
 
-            this.boundClickHandler = this.handleClick.bind(this); // Зберігаємо прив'язаний обробник
-            this.boundContextMenuHandler = this.handleContextMenu.bind(this); // Зберігаємо прив'язаний обробник
+            this.boundClickHandler = this.handleClick.bind(this);
+            this.boundContextMenuHandler = this.handleContextMenu.bind(this);
         } else {
             console.error(`Canvas with id '${canvasId}' not found.`);
         }
@@ -26,17 +28,31 @@ export class WayPoint {
     }
 
     handleClick(event) {
-        if (!this.isActive || event.button !== 0) return; // Only proceed for left-click
-
+        if (!this.isActive || event.button !== 0) return;
         const point = new paper.Point(event.offsetX, event.offsetY);
         this.addWayPoint(point);
     }
 
     handleContextMenu(event) {
         if (!this.isActive) return;
-
-        event.preventDefault(); // Prevent the context menu from appearing
+        event.preventDefault();
         this.removeLastWayPoint();
+    }
+
+    activateEditMode() {
+        this.isEditMode = true;
+        this.setupListeners();
+        console.log('Way Point edit mode activated');
+    }
+
+    deactivateEditMode() {
+        this.isEditMode = false;
+        this.removeListeners();
+        console.log('Way Point edit mode deactivated');
+    }
+
+    findWayPointAtPosition(point) {
+        return this.wayPoints.find(wp => this.calculateDistance(point, new paper.Point(wp.x, wp.y)) < 6);
     }
 
     generateWayPointID() {
@@ -46,7 +62,7 @@ export class WayPoint {
         return `${buildingID}${buildingLevel}${pointID}`;
     }
 
-    drawWayPoint(point, id) {
+    drawWayPoint(point, id, description = '') {
         const wayPointID = id || this.generateWayPointID();
         const outerCircle = new paper.Path.Circle(point, 6);
         outerCircle.strokeColor = 'black';
@@ -58,19 +74,18 @@ export class WayPoint {
 
         const group = new paper.Group([outerCircle, innerCircle]);
 
-        // Перевірка, чи точка вже існує, щоб уникнути дублювання
         const existingWayPoint = this.wayPoints.find(wp => wp.id === wayPointID);
         if (!existingWayPoint) {
-            this.wayPoints.push({ id: wayPointID, x: point.x, y: point.y, point: group });
-            console.log(`Added way point ID: ${wayPointID}, Coordinates: (${point.x}, ${point.y})`);
+            this.wayPoints.push({ id: wayPointID, x: point.x, y: point.y, description, point: group });
+            console.log(`Added way point ID: ${wayPointID}, Coordinates: (${point.x}, ${point.y}), Description: ${description}`);
         } else {
-            existingWayPoint.point = group; // Оновлюємо зображення існуючої точки
+            existingWayPoint.point = group;
         }
         paper.view.update();
     }
 
-    addWayPoint(point, id = null) {
-        this.drawWayPoint(point, id);
+    addWayPoint(point, id = null, description = '') {
+        this.drawWayPoint(point, id, description);
     }
 
     removeLastWayPoint() {
@@ -86,35 +101,10 @@ export class WayPoint {
         return this.wayPoints;
     }
 
-    // Calculate the distance between two points
     calculateDistance(point1, point2) {
         return Math.sqrt(Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2));
     }
 
-    // Find the nearest two neighbors for a given point
-    findNearestNeighbors(targetPoint) {
-        if (this.wayPoints.length < 3) {
-            console.log('Not enough way points to find neighbors.');
-            return [];
-        }
-
-        const distances = this.wayPoints.map(wayPoint => ({
-            id: wayPoint.id,
-            x: wayPoint.x,
-            y: wayPoint.y,
-            distance: this.calculateDistance(targetPoint, wayPoint)
-        }));
-
-        // Sort by distance and exclude the target point itself
-        const sortedDistances = distances
-            .filter(d => d.distance !== 0)
-            .sort((a, b) => a.distance - b.distance);
-
-        // Return the nearest two neighbors
-        return sortedDistances.slice(0, 2);
-    }
-
-    // Get the last added way point
     getLastWayPoint() {
         return this.wayPoints.length > 0 ? this.wayPoints[this.wayPoints.length - 1] : null;
     }
@@ -137,5 +127,17 @@ export class WayPoint {
             wp.point.visible = this.isVisible;
         });
         paper.view.update();
+    }
+
+    updateWayPoint(id, x, y, description) {
+        const wayPoint = this.wayPoints.find(wp => wp.id === id);
+        if (wayPoint) {
+            wayPoint.x = x;
+            wayPoint.y = y;
+            wayPoint.description = description;
+            wayPoint.point.position = new paper.Point(x, y);
+            paper.view.update();
+            console.log(`Way point ID: ${id} updated to new coordinates: (${x}, ${y}) and description: ${description}`);
+        }
     }
 }

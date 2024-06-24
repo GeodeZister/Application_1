@@ -9,6 +9,8 @@ import { WayPoint } from './WayPoint.js';
 import { AngleDetection } from './AngleDetection.js';
 import { SituationPoint } from './SituationPoint.js';
 import { RoomManager } from './RoomManager.js';
+import { Graph } from './Graph.js';
+
 
 export class InitialData {
     static instance = null;
@@ -29,6 +31,9 @@ export class InitialData {
 
         this.imageCtx = this.imageCanvas.getContext('2d');
         this.secondCtx = this.secondCanvas.getContext('2d');
+
+        this.currentPage = 1;
+        this.pointsPerPage = 15;
 
         this.scaleParameters = new ScaleParameters();
         this.projectManager = new ProjectManager(this);
@@ -81,6 +86,20 @@ export class InitialData {
 
         document.getElementById('viewWayPointsButton').addEventListener('click', () => this.createWayPointsTable());
 
+        document.getElementById('editWayPointButton').addEventListener('click', () => {
+            this.activateTool(this.wayPoint, this.wayPoint.activateEditMode, "Way Point edit mode activated.");
+        });
+
+        this.imageCanvas.addEventListener('click', (event) => {
+            if (this.currentTool === this.wayPoint && this.wayPoint.isEditMode) {
+                const point = new paper.Point(event.offsetX, event.offsetY);
+                const wayPoint = this.wayPoint.findWayPointAtPosition(point);
+                if (wayPoint) {
+                    this.showEditWayPointForm(wayPoint);
+                }
+            }
+        });
+
         document.getElementById('drawLineButton').addEventListener('click', () => {
             this.activateTool(this.drawing, this.drawing.activate, "Drawing tool activated.");
         });
@@ -88,6 +107,14 @@ export class InitialData {
         document.getElementById('lineColor').addEventListener('change', (event) => {
             this.drawing.setLineColor(event.target.value);
         });
+
+        document.getElementById('magicGoButton').addEventListener('click', () => {
+            const graph = new Graph();
+            const wayPoints = this.wayPoint.getWayPoints();
+            const situationPoints = this.situationPoint.getSituationPoints();
+            graph.collectPoints(wayPoints, situationPoints);
+        });
+
 
         document.getElementById('drawRoomButton').addEventListener('click', () => {
             this.activateTool(this.roomManager, this.roomManager.activate, "Room drawing tool activated.");
@@ -228,6 +255,50 @@ export class InitialData {
         }
     }
 
+    showEditWayPointForm(wayPoint) {
+        const existingModal = document.getElementById('editWayPointModal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'editWayPointModal';
+        modal.style.cssText = `
+            position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            z-index: 100; padding: 20px; background: white; border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);`;
+
+        const form = document.createElement('form');
+        form.innerHTML = `
+            <label for="wayPointId">ID:</label>
+            <input type="text" id="wayPointId" name="wayPointId" value="${wayPoint.id}" disabled><br>
+            <label for="wayPointX">X:</label>
+            <input type="number" id="wayPointX" name="wayPointX" value="${wayPoint.x}"><br>
+            <label for="wayPointY">Y:</label>
+            <input type="number" id="wayPointY" name="wayPointY" value="${wayPoint.y}"><br>
+            <label for="wayPointDescription">Description:</label>
+            <input type="text" id="wayPointDescription" name="wayPointDescription" value="${wayPoint.description}"><br>
+            <button type="button" id="saveWayPointButton">Save</button>
+            <button type="button" id="cancelWayPointButton">Cancel</button>
+        `;
+
+        form.querySelector('#saveWayPointButton').addEventListener('click', () => {
+            const x = parseFloat(form.querySelector('#wayPointX').value);
+            const y = parseFloat(form.querySelector('#wayPointY').value);
+            const description = form.querySelector('#wayPointDescription').value;
+            this.wayPoint.updateWayPoint(wayPoint.id, x, y, description);
+            document.body.removeChild(modal);
+        });
+
+        form.querySelector('#cancelWayPointButton').addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+
+        modal.appendChild(form);
+        document.body.appendChild(modal);
+    }
+
+
     highlightButton(buttonId) {
         document.querySelectorAll('.navbar button').forEach(button => button.classList.remove('active'));
         document.getElementById(buttonId).classList.add('active');
@@ -271,13 +342,13 @@ export class InitialData {
             directionalAngle: this.scaleParameters.getDirectionalAngle() !== null ? this.scaleParameters.getDirectionalAngle().toFixed(2) : 'N/A'
         };
 
-        console.log('Collected Parameters Data:', data); // Додаємо логування
+        console.log('Collected Parameters Data:', data);
 
         return data;
     }
 
    updateParametersTable(parametersTable, data) {
-        console.log('Updating Parameters Table with:', data); // Додаємо логування
+        console.log('Updating Parameters Table with:', data);
 
         const rows = [];
         rows.push(`<tr><th>Scale</th><td>${data.scale}</td></tr>`);
@@ -304,7 +375,7 @@ export class InitialData {
         }
 
         parametersTable.innerHTML = rows.join('');
-    }
+   }
 
     updateActiveButton(button) {
         document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active'));
@@ -384,12 +455,12 @@ export class InitialData {
     }
 
     createWayPointsTable() {
-        const wayPoints = this.wayPoint.getWayPoints();
+        const wayPoints = this.getPaginatedWayPoints();
         const table = document.createElement('table');
         table.setAttribute('border', '1');
 
         const headerRow = document.createElement('tr');
-        const headers = ['ID', 'X', 'Y', 'Neighbor 1 ID', 'Neighbor 2 ID'];
+        const headers = ['ID', 'X', 'Y', 'Description'];
         headers.forEach(headerText => {
             const header = document.createElement('th');
             const textNode = document.createTextNode(headerText);
@@ -413,17 +484,9 @@ export class InitialData {
             yCell.textContent = wayPoint.y.toFixed(2);
             row.appendChild(yCell);
 
-            const neighbors = this.wayPoint.findNearestNeighbors(wayPoint);
-            neighbors.forEach((neighbor, index) => {
-                const neighborIdCell = document.createElement('td');
-                neighborIdCell.textContent = neighbor.id;
-                row.appendChild(neighborIdCell);
-            });
-
-            for (let i = neighbors.length; i < 2; i++) {
-                const emptyIdCell = document.createElement('td');
-                row.appendChild(emptyIdCell);
-            }
+            const descriptionCell = document.createElement('td');
+            descriptionCell.textContent = wayPoint.description;
+            row.appendChild(descriptionCell);
 
             table.appendChild(row);
         });
@@ -441,6 +504,9 @@ export class InitialData {
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);`;
         modal.appendChild(table);
 
+        const paginationDiv = this.createPaginationControls();
+        modal.appendChild(paginationDiv);
+
         const closeButton = document.createElement('button');
         closeButton.textContent = 'Close';
         closeButton.addEventListener('click', () => document.body.removeChild(modal));
@@ -448,6 +514,48 @@ export class InitialData {
 
         document.body.appendChild(modal);
     }
+
+    getPaginatedWayPoints() {
+        const start = (this.currentPage - 1) * this.pointsPerPage;
+        const end = start + this.pointsPerPage;
+        return this.wayPoint.getWayPoints().slice(start, end);
+    }
+
+    createPaginationControls() {
+        const paginationDiv = document.createElement('div');
+        paginationDiv.style.cssText = 'margin-top: 10px; text-align: center;';
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Previous';
+        prevButton.disabled = this.currentPage === 1;
+        prevButton.addEventListener('click', () => {
+            this.currentPage--;
+            this.updateWayPointsTable();
+        });
+
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.disabled = this.currentPage * this.pointsPerPage >= this.wayPoint.getWayPoints().length;
+        nextButton.addEventListener('click', () => {
+            this.currentPage++;
+            this.updateWayPointsTable();
+        });
+
+        paginationDiv.appendChild(prevButton);
+        paginationDiv.appendChild(nextButton);
+
+        return paginationDiv;
+    }
+
+    updateWayPointsTable() {
+        const existingModal = document.getElementById('wayPointsModal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+        this.createWayPointsTable();
+    }
+
+    // Вставте цей метод в межах класу InitialData
     redrawAllElements() {
         this.wayPoint.getWayPoints().forEach(wayPoint => {
             this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
@@ -462,6 +570,7 @@ export class InitialData {
             this.roomManager.addRoom(vertices, room.name, room.id);
         });
     }
+
 
 
 
