@@ -10,6 +10,8 @@ import { AngleDetection } from './AngleDetection.js';
 import { SituationPoint } from './SituationPoint.js';
 import { RoomManager } from './RoomManager.js';
 import { Graph } from './Graph.js';
+import { CopyProjectExport } from './CopyProjectExport.js';
+import ApiService from './my-backend/ApiService.js';
 
 
 export class InitialData {
@@ -63,8 +65,20 @@ export class InitialData {
         this.points = [];
     }
 
+
     setupListeners() {
         document.getElementById('loadImageButton').addEventListener('click', () => this.loadImage());
+
+        document.getElementById('checkdb').addEventListener('click', async () => {
+            try {
+                const message = await ApiService.getIconList();
+                console.log(message);
+                alert(message);
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        });
 
         document.getElementById('drawWallButton').addEventListener('click', () => {
             this.activateTool(this.drawing, this.drawing.activateWall, "Wall drawing tool activated.");
@@ -79,9 +93,26 @@ export class InitialData {
             }
         });
 
+
+
+        document.getElementById('pointslist').addEventListener('click', async () => {
+            try {
+                const pointsList = await ApiService.getSituationPoints();
+                this.situationPoint.showSituationPoints(pointsList);
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        });
+
         document.getElementById('toggleRoomsButton').addEventListener('click', () => {
             this.roomManager.toggleRoomsVisibility();
             this.log(`Rooms ${this.roomManager.rooms[0].visible ? 'shown' : 'hidden'}.`);
+        });
+
+        document.getElementById('copyProjectButton').addEventListener('click', () => {
+            const copyProjectExport = new CopyProjectExport(this);
+            copyProjectExport.copyCurrentProject();
         });
 
         document.getElementById('viewWayPointsButton').addEventListener('click', () => this.createWayPointsTable());
@@ -128,45 +159,6 @@ export class InitialData {
             this.drawing.setLineWidth(parseInt(event.target.value, 10));
         });
 
-        document.getElementById('elevatorButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'elevator') {
-                this.deactivateTool();
-                this.log("Elevator tool deactivated.");
-            } else {
-                this.situationPoint.activate('elevator');
-                this.activateTool(this.situationPoint, null, "Elevator tool activated.");
-            }
-        });
-
-        document.getElementById('stairsButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'stairs') {
-                this.deactivateTool();
-                this.log("Stairs tool deactivated.");
-            } else {
-                this.situationPoint.activate('stairs');
-                this.activateTool(this.situationPoint, null, "Stairs tool activated.");
-            }
-        });
-
-        document.getElementById('fireExtinguisherButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'fireExtinguisher') {
-                this.deactivateTool();
-                this.log("Fire Extinguisher tool deactivated.");
-            } else {
-                this.situationPoint.activate('fireExtinguisher');
-                this.activateTool(this.situationPoint, null, "Fire Extinguisher tool activated.");
-            }
-        });
-
-        document.getElementById('waterCoolerButton').addEventListener('click', () => {
-            if (this.currentTool === this.situationPoint && this.situationPoint.isActive && this.situationPoint.currentType === 'waterCooler') {
-                this.deactivateTool();
-                this.log("Water Cooler tool deactivated.");
-            } else {
-                this.situationPoint.activate('waterCooler');
-                this.activateTool(this.situationPoint, null, "Water Cooler tool activated.");
-            }
-        });
 
         document.getElementById('viewSituationPointsButton').addEventListener('click', () => this.situationPoint.createSituationPointsTable());
 
@@ -233,6 +225,24 @@ export class InitialData {
         });
 
         this.setupModalListeners();
+    }
+
+    handleCopyProjectSubmit(form, modal) {
+        const newProjectName = form.newProjectName.value.trim();
+        const newBuildingID = form.newBuildingID.value.trim();
+        const newBuildingLevel = form.newBuildingLevel.value.trim();
+
+        if (!newProjectName || !newBuildingID || !newBuildingLevel) {
+            alert('All fields must be filled. Please enter all required information.');
+            return;  // Keep the modal open for correction
+        }
+
+        const newProjectData = { projectName: newProjectName, buildingID: newBuildingID, buildingLevel: newBuildingLevel };
+
+        const copyProjectExport = new CopyProjectExport(this);
+        copyProjectExport.copyProject(newProjectData);
+
+        document.body.removeChild(modal);
     }
 
     activateTool(tool, activateMethod, logMessage) {

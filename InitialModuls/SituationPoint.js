@@ -6,9 +6,11 @@ export class SituationPoint {
             paper.setup(this.canvas);
             this.situationPoints = [];
             this.isActive = false;
-            this.currentType = null; // Додана властивість для збереження типу ситуаційної точки
+            this.currentType = null;
+            this.iconData = null;
 
-            this.boundClickHandler = this.handleClick.bind(this); // Зберігаємо прив'язаний обробник
+            this.boundClickHandler = this.handleClick.bind(this);
+            this.boundRightClickHandler = this.handleRightClick.bind(this);
         } else {
             console.error(`Canvas with id '${canvasId}' not found.`);
         }
@@ -16,21 +18,32 @@ export class SituationPoint {
 
     setupListeners() {
         this.canvas.addEventListener('click', this.boundClickHandler);
+        this.canvas.addEventListener('contextmenu', this.boundRightClickHandler); // Listen for right-click events
     }
 
     removeListeners() {
         this.canvas.removeEventListener('click', this.boundClickHandler);
+        this.canvas.removeEventListener('contextmenu', this.boundRightClickHandler); // Remove right-click event listener
     }
 
     handleClick(event) {
-        if (!this.isActive || event.button !== 0 || !this.currentType) return; // Only proceed for left-click
+        if (!this.isActive || event.button !== 0 || !this.currentType) return;
 
         const point = new paper.Point(event.offsetX, event.offsetY);
         this.addSituationPoint(point);
     }
 
-    setCurrentType(type) {
+    handleRightClick(event) {
+        event.preventDefault(); // Prevent the context menu from appearing
+        if (this.isActive) {
+            this.deactivate();
+            console.log('Right-click detected: Situation Point tool deactivated');
+        }
+    }
+
+    setCurrentType(type, iconData) {
         this.currentType = type;
+        this.iconData = iconData;
     }
 
     generateSituationPointID() {
@@ -41,110 +54,9 @@ export class SituationPoint {
         return `${buildingID}${buildingLevel}${pointID}${typeInitial}`;
     }
 
-    drawSituationPoint(point, id, type) {
-        this.currentType = type; // Встановлюємо тип для поточного завантаження
-        const situationPointID = id || this.generateSituationPointID();
-        const icon = this.getIconForType(this.currentType);
-
-        const raster = new paper.Raster({
-            source: 'data:image/svg+xml;base64,' + btoa(icon),
-            position: point,
-            scaling: 1.0, // Increased scaling to 1.0 to double the size
-            onLoad: function() {
-                this.position = point; // Ensure the position is correctly set after the image loads
-            }
-        });
-
-        const existingSituationPoint = this.situationPoints.find(sp => sp.id === situationPointID);
-        if (!existingSituationPoint) {
-            this.situationPoints.push({ id: situationPointID, type: this.currentType, x: point.x, y: point.y, point: raster });
-
-        } else {
-            existingSituationPoint.point = raster; // Update existing point image
-        }
-        paper.view.update();
-    }
-
-    getIconForType(type) {
-        switch (type) {
-            case 'elevator':
-                return this.createElevatorIconSVG(); // Example for default icon
-            case 'stairs':
-                return this.createStairsIconSVG(); // Path to the icon
-            case 'fireExtinguisher':
-                return this.createFireIconSVG(); // Path to the icon
-            case 'waterCooler':
-                return this.createDropIconSVG(); // Drop icon for water cooler
-            default:
-                return null;
-        }
-    }
-
-    createFireIconSVG() {
-        const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="25" height="25">
-            <circle cx="25" cy="25" r="25" fill="#E91E63" />
-            <path d="M32.5,20 l-2.5,-2.5 a2.5,2.5 0 0,1 0,-5 l2.5,-2.5 m0,5 l-2.5,-2.5 m-15,20 l2.5,-2.5 a2.5,2.5 0 0,1 5,0 l2.5,2.5 m0,-10 l-2.5,-2.5 m-5,2.5 l-2.5,-2.5 a2.5,2.5 0 0,0 -5,0 l-2.5,2.5 m0,10 l2.5,2.5 a2.5,2.5 0 0,0 5,0 l2.5,-2.5" fill="white"/>
-            <path d="M25,10 a5,5 0 0,1 0,10 a5,5 0 0,1 0,-10" fill="white"/>
-            <path d="M27.5,17.5 l0,-5 a2.5,2.5 0 0,0 -5,0 l0,5 m2.5,0 l0,2.5 a2.5,2.5 0 0,0 5,0 l0,-2.5" fill="#E91E63"/>
-            <path d="M20,27.5 a2.5,2.5 0 0,1 5,0 a2.5,2.5 0 0,1 -5,0" fill="#E91E63"/>
-            <path d="M22.5,27.5 l0,7.5 a2.5,2.5 0 0,1 -5,0 l0,-7.5" fill="white"/>
-        </svg>
-        `;
-        return svg;
-    }
-
-    createElevatorIconSVG() {
-        const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="25" height="25">
-            <rect x="10" y="10" width="30" height="30" stroke="black" stroke-width="2" fill="none"/>
-            <rect x="20" y="15" width="5" height="20" stroke="black" stroke-width="2" fill="none"/>
-            <rect x="25" y="15" width="5" height="20" stroke="black" stroke-width="2" fill="none"/>
-            <path d="M20 35 L30 35" stroke="black" stroke-width="2" />
-            <path d="M15 15 L20 10 L25 15" stroke="black" stroke-width="2" />
-            <path d="M25 15 L30 10 L35 15" stroke="black" stroke-width="2" />
-            <circle cx="35" cy="35" r="1.5" fill="black"/>
-            <circle cx="35" cy="38" r="1.5" fill="black"/>
-        </svg>
-        `;
-        return svg;
-    }
-
-    createDefaultIconSVG() {
-        const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                <circle cx="12" cy="12" r="10" stroke="black" stroke-width="2" fill="white" />
-                <path d="M12 2C10.89 2 10 2.9 10 4C10 5.1 10.89 6 12 6C13.11 6 14 5.1 14 4C14 2.9 13.11 2 12 2ZM12 8C9.33 8 7 10.33 7 13C7 15.67 9.33 18 12 18C14.67 18 17 15.67 17 13C17 10.33 14.67 8 12 8Z" fill="blue" />
-            </svg>
-        `;
-        return svg;
-    }
-
-    createStairsIconSVG() {
-        const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="25" height="25">
-                <path d="M10 40H16V34H22V28H28V22H34V16H40" stroke="black" stroke-width="2" fill="none"/>
-                <path d="M12 16L18 22M18 22H12M18 22V16" stroke="black" stroke-width="2" fill="none"/>
-                <path d="M38 32L32 26M32 26H38M32 26V32" stroke="black" stroke-width="2" fill="none"/>
-            </svg>
-        `;
-        return svg;
-    }
-
-
-
-    createDropIconSVG() {
-        const svg = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25">
-                <path d="M12.5 0C9.5 3.85 3.75 10.25 3.75 15C3.75 20.7 7.8 25 12.5 25S21.25 20.7 21.25 15C21.25 10.25 15.5 3.85 12.5 0Z" fill="blue"/>
-            </svg>
-        `;
-        return svg;
-    }
-
-    addSituationPoint(point, id = null, type = null) {
+    addSituationPoint(point, id = null, type = null, iconData = null) {
         if (type) {
-            this.setCurrentType(type);
+            this.setCurrentType(type, iconData);
         }
 
         if (!this.currentType) {
@@ -152,21 +64,47 @@ export class SituationPoint {
             return;
         }
 
-        this.drawSituationPoint(point, id, this.currentType);
+        console.log('Adding situation point:', { point, id, type: this.currentType, iconData });
+        this.drawSituationPoint(point, id, this.currentType, iconData || this.iconData);
+    }
+
+    drawSituationPoint(point, id, type, iconData) {
+        this.currentType = type;
+        const situationPointID = id || this.generateSituationPointID();
+        const icon = iconData || this.iconData;
+
+        console.log('Drawing situation point:', { point, id: situationPointID, type, iconData });
+
+        const existingSituationPoint = this.situationPoints.find(sp => sp.id === situationPointID);
+
+        if (existingSituationPoint) {
+            existingSituationPoint.point.position = point;
+        } else {
+            const raster = new paper.Raster({
+                source: 'data:image/svg+xml;base64,' + btoa(icon),
+                position: point,
+                scaling: 1.0,
+                onLoad: function() {
+                    this.position = point;
+                }
+            });
+
+            this.situationPoints.push({ id: situationPointID, type: this.currentType, x: point.x, y: point.y, point: raster });
+        }
+        paper.view.update();
     }
 
     getSituationPoints() {
         return this.situationPoints;
     }
 
-    // Get the last added situation point
     getLastSituationPoint() {
         return this.situationPoints.length > 0 ? this.situationPoints[this.situationPoints.length - 1] : null;
     }
 
-    activate(type) {
+    activate(type, iconData) {
         this.isActive = true;
-        this.currentType = type;
+        this.setCurrentType(type, iconData);
         this.setupListeners();
         console.log(`${type} tool activated`);
     }
@@ -184,7 +122,7 @@ export class SituationPoint {
         table.setAttribute('border', '1');
 
         const headerRow = document.createElement('tr');
-        const headers = ['ID', 'Type', 'X', 'Y'];
+        const headers = ['ID', 'Type', 'X', 'Y', 'Actions'];
         headers.forEach(headerText => {
             const header = document.createElement('th');
             const textNode = document.createTextNode(headerText);
@@ -212,6 +150,16 @@ export class SituationPoint {
             yCell.textContent = point.y.toFixed(2);
             row.appendChild(yCell);
 
+            const actionsCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => {
+                this.removeSituationPoint(point.id);
+                row.remove();
+            });
+            actionsCell.appendChild(deleteButton);
+            row.appendChild(actionsCell);
+
             table.appendChild(row);
         });
 
@@ -234,5 +182,117 @@ export class SituationPoint {
         modal.appendChild(closeButton);
 
         document.body.appendChild(modal);
+    }
+
+    removeSituationPoint(id) {
+        const index = this.situationPoints.findIndex(point => point.id === id);
+        if (index !== -1) {
+            this.situationPoints[index].point.remove(); // Remove the point from the canvas
+            this.situationPoints.splice(index, 1);
+            console.log(`Situation point with ID ${id} removed.`);
+        }
+    }
+
+    redrawAllSituationPoints() {
+        paper.project.clear();
+        this.situationPoints.forEach(point => {
+            const pointPosition = new paper.Point(point.x, point.y);
+            this.drawSituationPoint(pointPosition, point.id, point.type, point.point.source);
+        });
+    }
+
+    showSituationPoints(pointsList) {
+        const table = document.createElement('table');
+        table.setAttribute('border', '1');
+
+        const headerRow = document.createElement('tr');
+        const headers = ['Type', 'Icon'];
+        headers.forEach(headerText => {
+            const header = document.createElement('th');
+            const textNode = document.createTextNode(headerText);
+            header.appendChild(textNode);
+            headerRow.appendChild(header);
+        });
+        table.appendChild(headerRow);
+
+        pointsList.forEach(point => {
+            const row = document.createElement('tr');
+
+            const typeCell = document.createElement('td');
+            typeCell.textContent = point.type;
+            row.appendChild(typeCell);
+
+            const iconCell = document.createElement('td');
+            const iconButton = document.createElement('button');
+            const iconImg = document.createElement('img');
+            iconImg.src = 'data:image/svg+xml;base64,' + btoa(point.icon);
+            iconImg.alt = point.type;
+            iconButton.appendChild(iconImg);
+            iconButton.addEventListener('click', () => {
+                this.activate(point.type, point.icon); // Активуємо інструмент з іконкою
+            });
+            iconCell.appendChild(iconButton);
+            row.appendChild(iconCell);
+
+            table.appendChild(row);
+        });
+
+        const existingModal = document.getElementById('pointsListModal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'pointsListModal';
+        modal.style.cssText = `
+            position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            z-index: 100; padding: 20px; background: white; border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: move;`;
+        modal.appendChild(table);
+
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Close';
+        closeButton.addEventListener('click', () => document.body.removeChild(modal));
+        modal.appendChild(closeButton);
+
+        document.body.appendChild(modal);
+        this.makeElementDraggable(modal);
+    }
+
+    getIconData(type) {
+        const situationPoint = this.situationPoints.find(sp => sp.type === type);
+        return situationPoint ? situationPoint.iconData : null;
+    }
+
+
+    makeElementDraggable(el) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+        el.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            el.style.top = (el.offsetTop - pos2) + "px";
+            el.style.left = (el.offsetLeft - pos1) + "px";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
     }
 }

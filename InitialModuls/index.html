@@ -14,6 +14,7 @@
             <div class="dropdown-content">
                 <button class="button-15" id="newProjectButton">New Project</button>
                 <button class="button-15" id="loadJsonButton">Load Project</button>
+                <button class="button-15" id="copyProjectButton">Create new from this</button>
                 <button class="button-15" id="exportSVGButton">Export as JPG</button>
                 <button class="button-15" id="exportJsonButton">Export JSON</button>
                 <input type="file" id="jsonFileInput" class="hidden" />
@@ -27,11 +28,11 @@
                 <button class="button-15" id="setAngleButton">Set Angle</button>
                 <button class="button-15" id="rulerButton">Ruler Tool</button>
                 <button class="button-15" id="addCoordinatesButton">Add 0 coordinates</button>
-
-                <button class="button-15" id="checkCoordinatesButton">Check Coordinates</button> <!-- Changed from checkbox to button -->
+                <button class="button-15" id="checkdb">Check DB</button>
+                <button class="button-15" id="checkCoordinatesButton">Check Coordinates</button>
             </div>
         </div>
-        <button class="button-15" id="listParametersButton">List of Parameters</button>
+
         <div class="dropdown">
             <button class="button-15 dropbtn">Drawing</button>
             <div class="dropdown-content">
@@ -43,10 +44,7 @@
         <div class="dropdown">
             <button class="button-15 dropbtn">Situation points</button>
             <div class="dropdown-content">
-                <button class="button-15" id="elevatorButton">Elevator</button>
-                <button class="button-15" id="stairsButton">Stairs</button>
-                <button class="button-15" id="fireExtinguisherButton">Fire Extinguisher</button>
-                <button class="button-15" id="waterCoolerButton">WatterCuller</button>
+                <button class="button-15" id="pointslist">Add Situation Point</button>
                 <button class="button-15" id="viewSituationPointsButton">List of Situation Points</button>
             </div>
         </div>
@@ -69,6 +67,8 @@
                 <button class="button-15" id="toggleRoomsButton">Toggle Rooms</button>
             </div>
         </div>
+        <button class="button-15" id="listParametersButton">List of Parameters</button>
+
 
 
         <label class="color-input">
@@ -87,7 +87,6 @@
     </div>
 
     <div id="coordinatesDisplay" style="position: absolute; display: none; pointer-events: none; z-index: 100;"></div>
-
     <div id="canvasContainer">
         <canvas id="secondCanvas"></canvas>
         <canvas id="imageCanvas"></canvas>

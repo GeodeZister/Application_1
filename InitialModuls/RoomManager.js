@@ -159,7 +159,7 @@ export class RoomManager {
     }
 
     addRoom(vertices, name, id) {
-        console.log(`addRoom called with vertices:`, vertices, `name: ${name}, id: ${id}`);
+        //console.log(`addRoom called with vertices:`, vertices, `name: ${name}, id: ${id}`);
         const polygon = new paper.Path({
             segments: vertices,
             strokeColor: 'black',
@@ -176,7 +176,7 @@ export class RoomManager {
         });
 
         this.labelRoom(polygon, name);
-        console.log(`Loaded room ID: ${id}, Name: ${name}, Vertices:`, vertices);
+        //console.log(`Loaded room ID: ${id}, Name: ${name}, Vertices:`, vertices);
         paper.view.update();
     }
 

@@ -92,12 +92,7 @@ export class ExportData {
         const projectData = this.scaleParameters.getProjectData();
         const boundingBoxParams = this.scaleParameters.getBoundingBoxParameters();
         const coordinatesData = this.scaleParameters.getCoordinates();
-        const wayPoints = this.wayPoint.getWayPoints().map(wp => ({
-            id: wp.id,
-            x: wp.x,
-            y: wp.y,
-            description: wp.description // Додаємо опис
-        }));
+        const wayPoints = this.wayPoint.getWayPoints();
         const situationPoints = this.situationPoint.getSituationPoints();
         const rooms = this.roomManager.getRooms();
 
@@ -173,7 +168,7 @@ export class ExportData {
 
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
-                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id, wayPointData.description); // Додаємо опис
+                    this.initialData.wayPoint.addWayPoint(point, wayPointData.id);
                 });
 
                 if (projectData.situationPoints) {
@@ -201,7 +196,7 @@ export class ExportData {
 
     redrawAllElements() {
         this.wayPoint.getWayPoints().forEach(wayPoint => {
-            this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id, wayPoint.description); // Додаємо опис
+            this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
         });
 
         this.situationPoint.getSituationPoints().forEach(situationPoint => {

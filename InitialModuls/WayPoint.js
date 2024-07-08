@@ -62,30 +62,31 @@ export class WayPoint {
         return `${buildingID}${buildingLevel}${pointID}`;
     }
 
-    drawWayPoint(point, id, description = '') {
+    drawWayPoint(point, id) {
         const wayPointID = id || this.generateWayPointID();
-        const outerCircle = new paper.Path.Circle(point, 6);
-        outerCircle.strokeColor = 'black';
-        outerCircle.fillColor = 'black';
-
-        const innerCircle = new paper.Path.Circle(point, 3);
-        innerCircle.strokeColor = 'yellow';
-        innerCircle.fillColor = 'yellow';
-
-        const group = new paper.Group([outerCircle, innerCircle]);
-
         const existingWayPoint = this.wayPoints.find(wp => wp.id === wayPointID);
-        if (!existingWayPoint) {
-            this.wayPoints.push({ id: wayPointID, x: point.x, y: point.y, description, point: group });
-            console.log(`Added way point ID: ${wayPointID}, Coordinates: (${point.x}, ${point.y}), Description: ${description}`);
+
+        if (existingWayPoint) {
+            existingWayPoint.point.position = point;
         } else {
-            existingWayPoint.point = group;
+            const outerCircle = new paper.Path.Circle(point, 6);
+            outerCircle.strokeColor = 'black';
+            outerCircle.fillColor = 'black';
+
+            const innerCircle = new paper.Path.Circle(point, 3);
+            innerCircle.strokeColor = 'yellow';
+            innerCircle.fillColor = 'yellow';
+
+            const group = new paper.Group([outerCircle, innerCircle]);
+
+            this.wayPoints.push({ id: wayPointID, x: point.x, y: point.y, point: group });
+            console.log(`Added way point ID: ${wayPointID}, Coordinates: (${point.x}, ${point.y})`);
         }
         paper.view.update();
     }
 
-    addWayPoint(point, id = null, description = '') {
-        this.drawWayPoint(point, id, description);
+    addWayPoint(point, id = null) {
+        this.drawWayPoint(point, id);
     }
 
     removeLastWayPoint() {
@@ -129,15 +130,14 @@ export class WayPoint {
         paper.view.update();
     }
 
-    updateWayPoint(id, x, y, description) {
+    updateWayPoint(id, x, y) {
         const wayPoint = this.wayPoints.find(wp => wp.id === id);
         if (wayPoint) {
             wayPoint.x = x;
             wayPoint.y = y;
-            wayPoint.description = description;
             wayPoint.point.position = new paper.Point(x, y);
             paper.view.update();
-            console.log(`Way point ID: ${id} updated to new coordinates: (${x}, ${y}) and description: ${description}`);
+            console.log(`Way point ID: ${id} updated to new coordinates: (${x}, ${y})`);
         }
     }
 }

@@ -1,3 +1,5 @@
+import ApiService from './my-backend/ApiService.js';
+
 export class ProjectManager {
     constructor(initialData) {
         this.initialData = initialData;
@@ -8,7 +10,10 @@ export class ProjectManager {
     setupListeners() {
         const newProjectButton = document.getElementById('newProjectButton');
         if (newProjectButton) {
-            newProjectButton.addEventListener('click', () => this.showProjectCreationForm());
+            newProjectButton.addEventListener('click', () => {
+                this.showProjectCreationForm();
+                this.loadExistingData();
+            });
         } else {
             console.error("Button with id 'newProjectButton' not found.");
         }
@@ -33,6 +38,46 @@ export class ProjectManager {
         closeButton.addEventListener('click', () => document.body.removeChild(modal));
     }
 
+    async loadExistingData() {
+        const projectNamesSelect = document.getElementById('existingProjectNames');
+        const buildingIDsSelect = document.getElementById('existingBuildingIDs');
+        const buildingLevelsSelect = document.getElementById('existingBuildingLevels');
+        const rasterURLsSelect = document.getElementById('existingRasterURLs');
+
+        const projects = await ApiService.getProjects();
+        const houses = await ApiService.getHouses();
+        const floors = await ApiService.getFloors();
+        const images = await ApiService.getImages();
+
+        projects.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.name;
+            option.text = project.name;
+            projectNamesSelect.appendChild(option);
+        });
+
+        houses.forEach(house => {
+            const option = document.createElement('option');
+            option.value = house.name;
+            option.text = house.name;
+            buildingIDsSelect.appendChild(option);
+        });
+
+        floors.forEach(floor => {
+            const option = document.createElement('option');
+            option.value = floor.level;
+            option.text = floor.level;
+            buildingLevelsSelect.appendChild(option);
+        });
+
+        images.forEach(image => {
+            const option = document.createElement('option');
+            option.value = image.path;
+            option.text = image.path;
+            rasterURLsSelect.appendChild(option);
+        });
+    }
+
     createModal() {
         const modal = document.createElement('div');
         modal.id = 'projectModal';
@@ -42,26 +87,44 @@ export class ProjectManager {
         modal.innerHTML = `
             <h2>Create New Project</h2>
             <form id="projectForm">
-                <label for="projectName">Project Name:</label>
-                <input type="text" id="projectName" name="projectName" required>
-                <br><br>
-                <label for="buildingID">Building ID:</label>
-                <input type="text" id="buildingID" name="buildingID" required>
-                <br><br>
-                <label for="buildingLevel">Building Level:</label>
-                <input type="text" id="buildingLevel" name="buildingLevel" required>
-                <br><br>
-                <label for="rasterURL">Raster Image URL:</label>
-                <input type="url" id="rasterURL" name="rasterURL" required>
-                <br><br>
-                <button type="submit">Create Project</button>
-                <button type="button" id="closeModal">Close</button>
+                <div class="form-row">
+                    <label for="projectName">Project Name:</label>
+                    <input type="text" id="projectName" name="projectName">
+                    <select id="existingProjectNames" name="existingProjectNames" onchange="document.getElementById('projectName').value = this.value;">
+                        <option value="">Select existing project</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="buildingID">Building ID:</label>
+                    <input type="text" id="buildingID" name="buildingID">
+                    <select id="existingBuildingIDs" name="existingBuildingIDs" onchange="document.getElementById('buildingID').value = this.value;">
+                        <option value="">Select existing building</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="buildingLevel">Building Level:</label>
+                    <input type="text" id="buildingLevel" name="buildingLevel">
+                    <select id="existingBuildingLevels" name="existingBuildingLevels" onchange="document.getElementById('buildingLevel').value = this.value;">
+                        <option value="">Select existing level</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="rasterURL">Raster Image URL:</label>
+                    <input type="url" id="rasterURL" name="rasterURL">
+                    <select id="existingRasterURLs" name="existingRasterURLs" onchange="document.getElementById('rasterURL').value = this.value;">
+                        <option value="">Select existing URL</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <button type="submit">Create Project</button>
+                    <button type="button" id="closeModal">Close</button>
+                </div>
             </form>
         `;
         return modal;
     }
 
-    handleSubmit(form, modal) {
+    async handleSubmit(form, modal) {
         const projectName = form.projectName.value.trim();
         const buildingID = form.buildingID.value.trim();
         const buildingLevel = form.buildingLevel.value.trim();
@@ -75,7 +138,21 @@ export class ProjectManager {
         this.rasterURL = rasterURL;
 
         const projectData = { projectName, buildingID, buildingLevel, rasterURL };
-        this.createProject(projectData);
+        console.log('Submitting project data:', projectData);
+
+        try {
+            const response = await ApiService.addProject(projectData);
+            console.log('Server response:', response);
+            if (response.ok) {
+                alert('Project created successfully');
+            } else {
+                alert('Failed to create project');
+            }
+        } catch (error) {
+            console.error('Error creating project:', error);
+            alert('Error creating project');
+        }
+
         document.body.removeChild(modal);  // Remove modal after successful submission
     }
 
@@ -117,7 +194,7 @@ export class ProjectManager {
         });
     }
 
-    loadProject(projectData) {
+    async loadProject(projectData) {
         if (this.initialData && this.initialData.scaleParameters) {
             const scaleParameters = this.initialData.scaleParameters;
 
@@ -156,26 +233,31 @@ export class ProjectManager {
             }
 
             this.rasterURL = projectData.projectData.rasterURL;
-            this.initialData.loadImage(() => {
+            this.initialData.loadImage(async () => {
                 this.initialData.redrawAllElements();
 
                 projectData.wayPoints.forEach(wayPointData => {
                     const point = new paper.Point(wayPointData.x, wayPointData.y);
                     this.initialData.wayPoint.addWayPoint(point, wayPointData.id, wayPointData.description);
+                    console.log('WayPoint added:', wayPointData);
                 });
 
                 if (projectData.situationPoints) {
+                    const iconList = await ApiService.getSituationPoints(); // Отримання списку іконок з бази даних
+
                     projectData.situationPoints.forEach(situationPointData => {
                         const point = new paper.Point(situationPointData.x, situationPointData.y);
-                        this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type);
+                        const iconData = iconList.find(icon => icon.type === situationPointData.type)?.icon || this.getDefaultIcon();
+                        this.initialData.situationPoint.addSituationPoint(point, situationPointData.id, situationPointData.type, iconData);
+                        console.log('SituationPoint added:', situationPointData);
                     });
                 }
 
                 if (projectData.rooms) {
                     projectData.rooms.forEach(roomData => {
-                        // Переконайтеся, що координати мають правильний формат
                         const vertices = roomData.vertices.map(v => new paper.Point(v[1], v[2]));
                         this.initialData.roomManager.addRoom(vertices, roomData.name, roomData.id);
+                        console.log('Room added:', roomData);
                     });
                 }
 
@@ -191,6 +273,14 @@ export class ProjectManager {
         }
     }
 
+    getDefaultIcon() {
+        const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" width="25" height="25">
+                <rect width="25" height="25" fill="red"/>
+            </svg>
+        `;
+        return svg;
+    }
 
     getImageUrl() {
         return this.rasterURL;

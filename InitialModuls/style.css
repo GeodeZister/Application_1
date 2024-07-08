@@ -316,3 +316,56 @@ input[type="color"]::-moz-color-swatch {
         z-index: 1001; /* Ensure dropdown is above other elements */
     }
 }
+
+#projectModal form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#projectModal .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#projectModal label {
+    font-weight: bold;
+}
+
+#projectModal input[type="text"],
+#projectModal input[type="url"],
+#projectModal select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    width: 100%;
+}
+
+#projectModal button[type="submit"],
+#projectModal button[type="button"] {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#projectModal button[type="submit"] {
+    background-color: #28a745;
+    color: white;
+}
+
+#projectModal button[type="button"] {
+    background-color: #dc3545;
+    color: white;
+}
+
+#projectModal button[type="submit"]:hover {
+    background-color: #218838;
+}
+
+#projectModal button[type="button"]:hover {
+    background-color: #c82333;
+}
