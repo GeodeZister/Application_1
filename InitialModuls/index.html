@@ -32,7 +32,6 @@
                 <button class="button-15" id="checkCoordinatesButton">Check Coordinates</button>
             </div>
         </div>
-
         <div class="dropdown">
             <button class="button-15 dropbtn">Drawing</button>
             <div class="dropdown-content">
@@ -56,7 +55,6 @@
                 <button class="button-15" id="magicGoButton">Magic Go</button>
                 <button class="button-15" id="toggleWayPointsButton">Toggle Way Points</button>
                 <button class="button-15" id="editWayPointButton">Edit Way Points</button>
-
             </div>
         </div>
         <div class="dropdown">
@@ -69,22 +67,26 @@
         </div>
         <button class="button-15" id="listParametersButton">List of Parameters</button>
 
-
-
         <label class="color-input">
           <input type="color" id="lineColor" name="lineColor" value="#ff0000">
           <div class="circle"></div>
         </label>
-
 
         <input type="number" id="lineWidth" name="lineWidth" min="1" max="10" value="2">
 
         <div id="infoPanel" class="info-panel">
             <div id="localCoordinates">Local: X, Y</div>
             <div id="pixelCoordinates">Pixels: X, Y</div>
-
         </div>
     </div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="closebtn" id="closeSidebar">&times;</button>
+        <div class="sidebar-content">
+            <div id="building-view"></div>
+        </div>
+    </div>
+    <button class="openbtn" id="openSidebar">&#9776;</button>
 
     <div id="coordinatesDisplay" style="position: absolute; display: none; pointer-events: none; z-index: 100;"></div>
     <div id="canvasContainer">
@@ -100,52 +102,6 @@
         </div>
     </div>
 
-    <script type="module">
-        import { InitialData } from './InitialData.js';
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const initialData = new InitialData('imageCanvas', 'secondCanvas');
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            var dropdowns = document.querySelectorAll('.dropdown');
-
-            dropdowns.forEach(function(dropdown) {
-                var button = dropdown.querySelector('.dropbtn');
-                var menu = dropdown.querySelector('.dropdown-content');
-                var hideTimeout;
-
-                function showMenu() {
-                    clearTimeout(hideTimeout);
-                    menu.style.display = 'block';
-                    setTimeout(function() {
-                        menu.style.opacity = 1;
-                    }, 0);
-                }
-
-                function hideMenu() {
-                    hideTimeout = setTimeout(function() {
-                        menu.style.opacity = 0;
-                        setTimeout(function() {
-                            menu.style.display = 'none';
-                        }, 300);
-                    }, 300);
-                }
-
-                button.addEventListener('mouseenter', showMenu);
-                button.addEventListener('mouseleave', hideMenu);
-
-                menu.addEventListener('mouseenter', function() {
-                    clearTimeout(hideTimeout);
-                    menu.style.display = 'block';
-                    setTimeout(function() {
-                        menu.style.opacity = 1;
-                    }, 0);
-                });
-
-                menu.addEventListener('mouseleave', hideMenu);
-            });
-        });
-    </script>
+    <script type="module" src="main.js"></script>
 </body>
 </html>

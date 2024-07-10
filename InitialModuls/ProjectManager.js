@@ -39,10 +39,10 @@ export class ProjectManager {
     }
 
     async loadExistingData() {
-        const projectNamesSelect = document.getElementById('existingProjectNames');
-        const buildingIDsSelect = document.getElementById('existingBuildingIDs');
-        const buildingLevelsSelect = document.getElementById('existingBuildingLevels');
-        const rasterURLsSelect = document.getElementById('existingRasterURLs');
+        const projectNamesDatalist = document.getElementById('existingProjectNames');
+        const buildingIDsDatalist = document.getElementById('existingBuildingIDs');
+        const buildingLevelsDatalist = document.getElementById('existingBuildingLevels');
+        const rasterURLsDatalist = document.getElementById('existingRasterURLs');
 
         const projects = await ApiService.getProjects();
         const houses = await ApiService.getHouses();
@@ -52,29 +52,25 @@ export class ProjectManager {
         projects.forEach(project => {
             const option = document.createElement('option');
             option.value = project.name;
-            option.text = project.name;
-            projectNamesSelect.appendChild(option);
+            projectNamesDatalist.appendChild(option);
         });
 
         houses.forEach(house => {
             const option = document.createElement('option');
             option.value = house.name;
-            option.text = house.name;
-            buildingIDsSelect.appendChild(option);
+            buildingIDsDatalist.appendChild(option);
         });
 
         floors.forEach(floor => {
             const option = document.createElement('option');
             option.value = floor.level;
-            option.text = floor.level;
-            buildingLevelsSelect.appendChild(option);
+            buildingLevelsDatalist.appendChild(option);
         });
 
         images.forEach(image => {
             const option = document.createElement('option');
             option.value = image.path;
-            option.text = image.path;
-            rasterURLsSelect.appendChild(option);
+            rasterURLsDatalist.appendChild(option);
         });
     }
 
@@ -89,31 +85,31 @@ export class ProjectManager {
             <form id="projectForm">
                 <div class="form-row">
                     <label for="projectName">Project Name:</label>
-                    <input type="text" id="projectName" name="projectName">
-                    <select id="existingProjectNames" name="existingProjectNames" onchange="document.getElementById('projectName').value = this.value;">
-                        <option value="">Select existing project</option>
-                    </select>
+                    <div class="combined-input">
+                        <input type="text" id="projectName" name="projectName" list="existingProjectNames">
+                        <datalist id="existingProjectNames"></datalist>
+                    </div>
                 </div>
                 <div class="form-row">
                     <label for="buildingID">Building ID:</label>
-                    <input type="text" id="buildingID" name="buildingID">
-                    <select id="existingBuildingIDs" name="existingBuildingIDs" onchange="document.getElementById('buildingID').value = this.value;">
-                        <option value="">Select existing building</option>
-                    </select>
+                    <div class="combined-input">
+                        <input type="text" id="buildingID" name="buildingID" list="existingBuildingIDs">
+                        <datalist id="existingBuildingIDs"></datalist>
+                    </div>
                 </div>
                 <div class="form-row">
                     <label for="buildingLevel">Building Level:</label>
-                    <input type="text" id="buildingLevel" name="buildingLevel">
-                    <select id="existingBuildingLevels" name="existingBuildingLevels" onchange="document.getElementById('buildingLevel').value = this.value;">
-                        <option value="">Select existing level</option>
-                    </select>
+                    <div class="combined-input">
+                        <input type="text" id="buildingLevel" name="buildingLevel" list="existingBuildingLevels">
+                        <datalist id="existingBuildingLevels"></datalist>
+                    </div>
                 </div>
                 <div class="form-row">
                     <label for="rasterURL">Raster Image URL:</label>
-                    <input type="url" id="rasterURL" name="rasterURL">
-                    <select id="existingRasterURLs" name="existingRasterURLs" onchange="document.getElementById('rasterURL').value = this.value;">
-                        <option value="">Select existing URL</option>
-                    </select>
+                    <div class="combined-input">
+                        <input type="url" id="rasterURL" name="rasterURL" list="existingRasterURLs">
+                        <datalist id="existingRasterURLs"></datalist>
+                    </div>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <button type="submit">Create Project</button>
@@ -135,7 +131,9 @@ export class ProjectManager {
             return;  // Keep the modal open for correction
         }
 
-        this.rasterURL = rasterURL;
+        this.rasterURL = rasterURL;  // Зберігаємо rasterURL
+        console.log('Stored rasterURL in handleSubmit:', this.rasterURL);  // Логування збереженого rasterURL
+        console.log('This in handleSubmit:', this);  // Логування this у handleSubmit
 
         const projectData = { projectName, buildingID, buildingLevel, rasterURL };
         console.log('Submitting project data:', projectData);
@@ -145,6 +143,7 @@ export class ProjectManager {
             console.log('Server response:', response);
             if (response.ok) {
                 alert('Project created successfully');
+                this.createProject(projectData);  // Оновлюємо дані в scaleParameters
             } else {
                 alert('Failed to create project');
             }
@@ -157,12 +156,21 @@ export class ProjectManager {
     }
 
     createProject(projectData) {
+        console.log('This in createProject:', this);  // Логування this у createProject
         if (this.initialData && this.initialData.scaleParameters) {
             this.initialData.scaleParameters.setProjectData(projectData);
+            this.rasterURL = projectData.rasterURL;  // Зберігаємо rasterURL у scaleParameters
             console.log('Project created successfully with data:', projectData);
+            console.log('Stored rasterURL in createProject:', this.rasterURL);  // Логування збереженого rasterURL
         } else {
             console.error('ScaleParameters is not available in initialData.');
         }
+    }
+
+    getImageUrl() {
+        console.log('This in getImageUrl:', this);  // Логування this у getImageUrl
+        console.log('Returning rasterURL from getImageUrl:', this.rasterURL);  // Логування поверненого rasterURL
+        return this.rasterURL;  // Повертаємо збережене значення rasterURL
     }
 
     loadProjectFromFile() {
@@ -282,7 +290,5 @@ export class ProjectManager {
         return svg;
     }
 
-    getImageUrl() {
-        return this.rasterURL;
-    }
+
 }
