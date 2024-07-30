@@ -114,7 +114,8 @@ export class ExportData {
             measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling(),
             realDistance: this.scaleParameters.getRealDistance(),
             scaleRatio: this.scaleParameters.getScaleRatio(),
-            directionalAngle: this.scaleParameters.getDirectionalAngle()
+            directionalAngle: this.scaleParameters.getDirectionalAngle(),
+            globalCoordinates: this.scaleParameters.getGlobalCoordinates()
         };
 
         const dataStr = JSON.stringify(exportData, null, 2);
@@ -155,6 +156,12 @@ export class ExportData {
             projectData.coordinatesData.forEach(coord => {
                 scaleParameters.addCoordinates(coord.inputXY, coord.positionXY);
             });
+
+            if (projectData.globalCoordinates) {
+                projectData.globalCoordinates.forEach(coord => {
+                    scaleParameters.addGlobalCoordinates(coord);
+                });
+            }
 
             const originPosition = projectData.originPosition;
             if (originPosition) {

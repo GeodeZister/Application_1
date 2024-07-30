@@ -18,27 +18,23 @@ export class RoomManager {
     }
 
     setupListeners() {
-        this.canvas.addEventListener('mousedown', (event) => this.handleMouseDown(event));
-        this.canvas.addEventListener('mousemove', (event) => this.handleMouseMove(event));
+        this.canvas.addEventListener('mousedown', this.handleMouseEvent.bind(this));
+        this.canvas.addEventListener('mousemove', this.handleMouseEvent.bind(this));
+        this.canvas.addEventListener('contextmenu', (event) => event.preventDefault()); // Забороняємо контекстне меню
     }
 
-    handleMouseDown(event) {
+    handleMouseEvent(event) {
         if (!this.isActive) return;
 
         const point = this.getMousePosition(event);
 
-        if (event.button === 0) {
+        if (event.type === 'mousedown' && event.button === 0) {
             this.addVertex(point);
-        } else if (event.button === 2) {
+        } else if (event.type === 'mousedown' && event.button === 2) {
             this.finishPolygon();
+        } else if (event.type === 'mousemove') {
+            this.updateTempLine(point);
         }
-    }
-
-    handleMouseMove(event) {
-        if (!this.isActive || !this.currentPolygon) return;
-
-        const point = this.getMousePosition(event);
-        this.updateTempLine(point);
     }
 
     getMousePosition(event) {
@@ -53,20 +49,25 @@ export class RoomManager {
         point = this.snapToExistingVertex(point);
 
         if (!this.currentPolygon) {
-            this.currentPolygon = new paper.Path({
-                strokeColor: 'black',
-                strokeWidth: 2,
-                closed: false,
-                fillColor: new paper.Color(1, 1, 0, 0.5)
-            });
-            this.currentVertices = [];
+            this.startPolygon(point);
+        } else {
+            this.currentPolygon.add(point);
+            this.currentVertices.push(point);
         }
-
-        this.currentPolygon.add(point);
-        this.currentVertices.push(point);
 
         this.createTempLine(point);
         paper.view.update();
+    }
+
+    startPolygon(point) {
+        this.currentPolygon = new paper.Path({
+            strokeColor: 'black',
+            strokeWidth: 2,
+            closed: false,
+            fillColor: new paper.Color(1, 1, 0, 0.5)
+        });
+        this.currentVertices = [point];
+        this.currentPolygon.add(point); // Додаємо перший пункт у полігон
     }
 
     snapToExistingVertex(point) {
@@ -159,7 +160,6 @@ export class RoomManager {
     }
 
     addRoom(vertices, name, id) {
-        //console.log(`addRoom called with vertices:`, vertices, `name: ${name}, id: ${id}`);
         const polygon = new paper.Path({
             segments: vertices,
             strokeColor: 'black',
@@ -176,8 +176,18 @@ export class RoomManager {
         });
 
         this.labelRoom(polygon, name);
-        //console.log(`Loaded room ID: ${id}, Name: ${name}, Vertices:`, vertices);
         paper.view.update();
+    }
+
+    deleteRoom(roomId) {
+        const roomIndex = this.rooms.findIndex(room => room.id === roomId);
+        if (roomIndex !== -1) {
+            const room = this.rooms[roomIndex];
+            room.polygon.remove();
+            this.rooms.splice(roomIndex, 1);
+            paper.view.update();
+            console.log(`Deleted room ID: ${roomId}`);
+        }
     }
 
     activate() {
@@ -202,7 +212,7 @@ export class RoomManager {
         table.setAttribute('border', '1');
 
         const headerRow = document.createElement('tr');
-        const headers = ['ID', 'Name', 'Vertices'];
+        const headers = ['ID', 'Name', 'Vertices', 'Actions'];
         headers.forEach(headerText => {
             const header = document.createElement('th');
             const textNode = document.createTextNode(headerText);
@@ -226,6 +236,13 @@ export class RoomManager {
             verticesCell.textContent = room.vertices.map(v => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`).join(', ');
             row.appendChild(verticesCell);
 
+            const actionsCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => this.deleteRoom(room.id));
+            actionsCell.appendChild(deleteButton);
+            row.appendChild(actionsCell);
+
             table.appendChild(row);
         });
 
@@ -239,7 +256,15 @@ export class RoomManager {
         modal.style.cssText = `
             position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
             z-index: 100; padding: 20px; background: white; border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);`;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); resize: both; overflow: auto;`;
+
+        // Додати заголовок для переміщення модального вікна
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 10px; cursor: move; z-index: 10; background: #2196F3; color: #fff; border-radius: 10px 10px 0 0;`;
+        header.textContent = 'Rooms Table';
+        modal.appendChild(header);
+
         modal.appendChild(table);
 
         const closeButton = document.createElement('button');
@@ -248,6 +273,33 @@ export class RoomManager {
         modal.appendChild(closeButton);
 
         document.body.appendChild(modal);
+
+        // Додати можливість переміщення
+        this.makeElementDraggable(modal, header);
+    }
+
+    makeElementDraggable(element, handle) {
+        let offsetX, offsetY, isDown = false;
+
+        handle.addEventListener('mousedown', (e) => {
+            isDown = true;
+            offsetX = e.clientX - element.offsetLeft;
+            offsetY = e.clientY - element.offsetTop;
+            document.addEventListener('mousemove', move);
+            document.addEventListener('mouseup', stop);
+        });
+
+        const move = (e) => {
+            if (!isDown) return;
+            element.style.left = `${e.clientX - offsetX}px`;
+            element.style.top = `${e.clientY - offsetY}px`;
+        };
+
+        const stop = () => {
+            isDown = false;
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', stop);
+        };
     }
 
     toggleRoomsVisibility() {

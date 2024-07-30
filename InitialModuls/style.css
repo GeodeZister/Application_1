@@ -416,3 +416,124 @@ input[type="color"]::-moz-color-swatch {
 .openbtn:hover {
     background-color: #444;
 }
+
+.building {
+    display: flex;
+    flex-direction: column-reverse; /* Відображаємо поверхи знизу вгору */
+    align-items: center; /* Центруємо модулі по горизонталі */
+    margin-top: 20px; /* Додаємо відступ зверху */
+}
+
+.floor, .roof {
+    width: 80%; /* Ширина модуля (можна змінити за необхідністю) */
+    border: 1px solid black;
+    padding: 10px;
+    margin: 5px;
+    position: relative;
+    background-color: #5bb3b9; /* Задаємо колір фону */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Додаємо тінь для об'єму */
+    display: flex; /* Додаємо flex-контейнер для вирівнювання елементів */
+    align-items: center; /* Вирівнюємо елементи по вертикалі */
+    justify-content: flex-start; /* Вирівнюємо елементи по горизонталі ліворуч */
+}
+
+.floor-button {
+    background: none;
+    border: 1px solid black;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    cursor: pointer;
+    margin-right: 10px; /* Додаємо відступ справа від кнопки */
+    flex-shrink: 0;
+}
+
+.floor-text, .roof-text {
+    margin-left: 10px; /* Зменшуємо відступ для тексту */
+    display: inline-block;
+    vertical-align: middle; /* Вирівнювання тексту по вертикалі */
+}
+
+.roof {
+    text-align: center;
+    background-color: black; /* Колір фону для даху */
+    color: white; /* Колір тексту для даху */
+    padding: 10px 0; /* Зменшуємо padding */
+}
+
+.building .roof::before {
+    content: '';
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 95px solid transparent;
+    border-right: 95px solid transparent;
+    border-bottom: 25px solid black;
+}
+
+/* Адаптивний дизайн для різних розмірів екранів */
+@media (max-width: 768px) {
+    .floor, .roof {
+        width: 90%; /* Збільшуємо ширину модулів для мобільних пристроїв */
+    }
+}
+
+@media (max-width: 480px) {
+    .floor, .roof {
+        width: 100%; /* Максимальна ширина модулів для дуже маленьких екранів */
+    }
+}
+
+
+
+.global-view-modal {
+    display: none; /* Приховати за замовчуванням */
+    position: fixed;
+    z-index: 100;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    height: 80%;
+    border: 1px solid #888;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: auto;
+}
+
+.global-view-modal-content {
+    position: relative;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 25px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#globalViewContent {
+    padding: 10px;
+    overflow: auto;
+    height: calc(100% - 60px); /* Adjust based on header height */
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}

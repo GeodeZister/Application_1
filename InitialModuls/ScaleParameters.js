@@ -8,7 +8,8 @@ export class ScaleParameters {
         this.originPosition = { x: null, y: null };
         this.boundingBoxParameters = { x: null, y: null, width: null, height: null };
         this.projectData = {};
-         this.directionalAngle = null;
+        this.directionalAngle = null;
+        this.globalCoordinates = [];
     }
 
     // Getter and setter for raster URL
@@ -122,6 +123,15 @@ export class ScaleParameters {
         console.log(`Measured Pixel Distance for Scaling: ${this.measuredPixelDistanceForScaling}`);
         console.log(`Real Distance: ${this.realDistance}`);
         console.log(`Scale Ratio: 1:${this.scaleRatio}`);
+    }
+
+    addGlobalCoordinates(globalCoordinates) {
+        this.globalCoordinates.push(globalCoordinates);
+        console.log(`Global coordinates added: ${JSON.stringify(globalCoordinates)}`);
+    }
+
+    getGlobalCoordinates() {
+        return this.globalCoordinates;
     }
 
     // Getter for building ID and level

@@ -230,6 +230,12 @@ export class ProjectManager {
                 console.log("Directional Angle set to:", projectData.directionalAngle);
             }
 
+            if (projectData.globalCoordinates) {
+                projectData.globalCoordinates.forEach(coord => {
+                    scaleParameters.addGlobalCoordinates(coord);
+                });
+            }
+
             projectData.coordinatesData.forEach(coord => {
                 scaleParameters.addCoordinates(coord.inputXY, coord.positionXY);
             });
