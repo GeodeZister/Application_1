@@ -7,9 +7,10 @@ export class ScaleParameters {
         this.coordinatesList = [];
         this.originPosition = { x: null, y: null };
         this.boundingBoxParameters = { x: null, y: null, width: null, height: null };
-        this.projectData = {};
+        this.projectData = {}; // Додано buildingID та buildingLevel як частини projectData
         this.directionalAngle = null;
         this.globalCoordinates = [];
+        this.floorData = {}; // Додано для збереження даних поверху
     }
 
     // Getter and setter for raster URL
@@ -17,6 +18,16 @@ export class ScaleParameters {
         return this.projectData ? this.projectData.rasterURL : null;
     }
 
+    setRasterURL(rasterURL) {
+        if (this.projectData) {
+            this.projectData.rasterURL = rasterURL;
+            console.log("Raster URL updated in ScaleParameters:", rasterURL);
+        } else {
+            console.error("Project data not initialized. Cannot set rasterURL.");
+        }
+    }
+
+    // Setter and Getter for Project Data
     setProjectData(data) {
         this.projectData = data;
         console.log("Project data stored in ScaleParameters:", this.projectData);
@@ -24,6 +35,36 @@ export class ScaleParameters {
 
     getProjectData() {
         return this.projectData;
+    }
+
+    // Setter and Getter for Floor Data
+    setFloorData(floorData) {
+        this.floorData = floorData;
+        console.log("Floor data stored in ScaleParameters:", this.floorData);
+    }
+
+    getFloorData() {
+        return this.floorData;
+    }
+
+    // Setter and Getter for Building ID
+    setBuildingID(buildingID) {
+        this.projectData.buildingID = buildingID;
+        console.log(`Building ID stored in ScaleParameters: ${this.projectData.buildingID}`);
+    }
+
+    getBuildingID() {
+        return this.projectData.buildingID;
+    }
+
+    // Setter and Getter for Building Level
+    setBuildingLevel(buildingLevel) {
+        this.projectData.buildingLevel = buildingLevel;
+        console.log(`Building Level stored in ScaleParameters: ${this.projectData.buildingLevel}`);
+    }
+
+    getBuildingLevel() {
+        return this.projectData.buildingLevel;
     }
 
     // Methods for bounding box parameters
@@ -133,14 +174,4 @@ export class ScaleParameters {
     getGlobalCoordinates() {
         return this.globalCoordinates;
     }
-
-    // Getter for building ID and level
-    getBuildingID() {
-        return this.projectData.buildingID;
-    }
-
-    getBuildingLevel() {
-        return this.projectData.buildingLevel;
-    }
-
 }

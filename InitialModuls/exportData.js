@@ -1,4 +1,4 @@
-import { Graph } from './Graph.js';
+//import { Graph } from './Graph.js';
 
 export class ExportData {
     constructor(canvasId, scaleParameters, wayPoint, drawing, situationPoint, roomManager) {
@@ -8,7 +8,7 @@ export class ExportData {
         this.drawing = drawing;
         this.situationPoint = situationPoint;
         this.roomManager = roomManager;
-        this.graph = new Graph();
+        //this.graph = new Graph();
         if (!this.canvas) {
             console.error(`Canvas with id '${canvasId}' not found.`);
             return;
@@ -82,13 +82,13 @@ export class ExportData {
         img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
     }
 
-    collectGraphData() {
-        const wayPoints = this.wayPoint.getWayPoints();
-        const situationPoints = this.situationPoint.getSituationPoints();
-        this.graph.collectPoints(wayPoints, situationPoints);
-    }
+    //collectGraphData() {
+    //    const wayPoints = this.wayPoint.getWayPoints();
+    //    const situationPoints = this.situationPoint.getSituationPoints();
+    //    this.graph.collectPoints(wayPoints, situationPoints);
+    //}
 
-    exportAsJson() {
+    async exportAsJson() {
         const projectData = this.scaleParameters.getProjectData();
         const boundingBoxParams = this.scaleParameters.getBoundingBoxParameters();
         const coordinatesData = this.scaleParameters.getCoordinates();
@@ -96,7 +96,11 @@ export class ExportData {
         const situationPoints = this.situationPoint.getSituationPoints();
         const rooms = this.roomManager.getRooms();
 
-        this.collectGraphData();
+        // Якщо scaling_id не задано, встановлюємо за замовчуванням "1"
+        const scalingId = this.scaleParameters.getScaleId() || "1";
+
+        // Якщо опис не задано, встановлюємо за замовчуванням "None"
+        const description = projectData.projectDescription || "None";
 
         const exportData = {
             projectData,
@@ -105,28 +109,35 @@ export class ExportData {
             wayPoints,
             situationPoints,
             rooms,
-            graph: {
-                nodes: this.graph.points,
-                edges: this.graph.edges
-            },
             originPosition: this.scaleParameters.getOriginPosition(),
             scale: this.scaleParameters.getScale(),
             measuredPixelDistanceForScaling: this.scaleParameters.getMeasuredPixelDistanceForScaling(),
             realDistance: this.scaleParameters.getRealDistance(),
             scaleRatio: this.scaleParameters.getScaleRatio(),
             directionalAngle: this.scaleParameters.getDirectionalAngle(),
-            globalCoordinates: this.scaleParameters.getGlobalCoordinates()
+            globalCoordinates: this.scaleParameters.getGlobalCoordinates(),
+            scaling_id: scalingId,  // Передаємо scaling_id з перевіркою
+            description: description  // Передаємо опис з перевіркою
         };
 
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        try {
+            const response = await fetch('http://localhost:3000/save-json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ projectData, jsonData: exportData })
+            });
 
-        const exportFileDefaultName = 'project_data.json';
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
+            if (response.ok) {
+                const result = await response.json();
+                console.log(result.message);
+            } else {
+                console.error('Failed to save JSON file on the server.');
+            }
+        } catch (error) {
+            console.error('Error during export as JSON:', error);
+        }
     }
 
     loadProject(projectData) {

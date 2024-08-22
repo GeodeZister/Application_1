@@ -1,0 +1,95 @@
+/* Загальний стиль для вікна Project Explorer */
+.project-explorer {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Заголовок вікна */
+.project-explorer h3 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Стиль для списку проектів */
+.project-explorer ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Стиль для кожного проекту в списку */
+.project-explorer ul li {
+    background: #fff;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    transition: background 0.3s ease;
+}
+
+/* Стиль при наведенні миші на проект */
+.project-explorer ul li:hover {
+    background: #e9f5ff;
+    cursor: pointer;
+}
+
+/* Стиль для заголовків полів проекту */
+.project-explorer ul li strong {
+    font-size: 14px;
+    color: #555;
+}
+
+/* Стиль для кнопки закриття вікна */
+.project-explorer button {
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+    display: block;
+    margin: 20px auto 0 auto;
+    cursor: pointer;
+}
+
+/* Стиль при наведенні на кнопку закриття */
+.project-explorer button:hover {
+    background-color: #0056b3;
+}
+
+/* Стиль для опису проекту */
+.project-explorer ul li .description {
+    color: #777;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Для кращого вигляду під час прокручування */
+.project-explorer::-webkit-scrollbar {
+    width: 6px;
+}
+
+.project-explorer::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.project-explorer::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}

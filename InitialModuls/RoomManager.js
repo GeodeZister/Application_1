@@ -2,10 +2,14 @@ export class RoomManager {
     constructor(canvasId, scaleParameters) {
         this.canvas = document.getElementById(canvasId);
         this.scaleParameters = scaleParameters;
+        this.rooms = [];
+        this.isActive = false;
+        this.currentPage = 1; // Поточна сторінка
+        this.roomsPerPage = 10; // Кількість кімнат на сторінці
+
         if (this.canvas) {
             paper.setup(this.canvas);
-            this.rooms = [];
-            this.isActive = false;
+            this.roomLayer = new paper.Layer(); // Створюємо окремий шар для кімнат
             this.currentPolygon = null;
             this.currentVertices = [];
             this.tempLine = null;
@@ -160,7 +164,28 @@ export class RoomManager {
     }
 
     addRoom(vertices, name, id) {
-        const polygon = new paper.Path({
+        // Перевірити, чи кімната вже існує, і якщо так, оновити її
+        let room = this.rooms.find(room => room.id === id);
+        if (room) {
+            // Оновити існуючу кімнату
+            room.vertices = vertices;
+            room.name = name;
+            room.polygon.remove(); // Видалити старий полігон з канвасу
+        } else {
+            // Додати нову кімнату
+            room = {
+                id: id || this.generateRoomID(),
+                name: name,
+                vertices: vertices,
+                polygon: null
+            };
+            this.rooms.push(room);
+        }
+
+        // Малюємо кімнату на окремому шарі
+        this.roomLayer.activate();
+
+        room.polygon = new paper.Path({
             segments: vertices,
             strokeColor: 'black',
             strokeWidth: 2,
@@ -168,16 +193,11 @@ export class RoomManager {
             fillColor: new paper.Color(1, 1, 0, 0.5)
         });
 
-        this.rooms.push({
-            id: id || this.generateRoomID(),
-            name: name,
-            vertices: vertices,
-            polygon: polygon
-        });
-
-        this.labelRoom(polygon, name);
+        this.labelRoom(room.polygon, name);
         paper.view.update();
     }
+
+
 
     deleteRoom(roomId) {
         const roomIndex = this.rooms.findIndex(room => room.id === roomId);
@@ -207,7 +227,9 @@ export class RoomManager {
     }
 
     createRoomsTable() {
-        const rooms = this.getRooms();
+        const startIndex = (this.currentPage - 1) * this.roomsPerPage;
+        const endIndex = startIndex + this.roomsPerPage;
+        const rooms = this.getRooms().slice(startIndex, endIndex);
         const table = document.createElement('table');
         table.setAttribute('border', '1');
 
@@ -229,11 +251,15 @@ export class RoomManager {
             row.appendChild(idCell);
 
             const nameCell = document.createElement('td');
+            nameCell.contentEditable = true; // Зробити редагованим
             nameCell.textContent = room.name;
+            nameCell.addEventListener('input', (e) => this.updateRoomName(room.id, e.target.textContent));
             row.appendChild(nameCell);
 
             const verticesCell = document.createElement('td');
+            verticesCell.contentEditable = true; // Зробити редагованим
             verticesCell.textContent = room.vertices.map(v => `(${v.x.toFixed(2)}, ${v.y.toFixed(2)})`).join(', ');
+            verticesCell.addEventListener('input', (e) => this.updateRoomVertices(room.id, e.target.textContent));
             row.appendChild(verticesCell);
 
             const actionsCell = document.createElement('td');
@@ -245,6 +271,14 @@ export class RoomManager {
 
             table.appendChild(row);
         });
+
+        // Додати рядок з інформацією про загальну кількість кімнат
+        const totalRoomsRow = document.createElement('tr');
+        const totalRoomsCell = document.createElement('td');
+        totalRoomsCell.colSpan = 4; // Розтягнути на всю ширину таблиці
+        totalRoomsCell.textContent = `Total rooms: ${this.rooms.length}`;
+        totalRoomsRow.appendChild(totalRoomsCell);
+        table.appendChild(totalRoomsRow);
 
         const existingModal = document.getElementById('roomsModal');
         if (existingModal) {
@@ -258,7 +292,6 @@ export class RoomManager {
             z-index: 100; padding: 20px; background: white; border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1); resize: both; overflow: auto;`;
 
-        // Додати заголовок для переміщення модального вікна
         const header = document.createElement('div');
         header.style.cssText = `
             padding: 10px; cursor: move; z-index: 10; background: #2196F3; color: #fff; border-radius: 10px 10px 0 0;`;
@@ -267,6 +300,10 @@ export class RoomManager {
 
         modal.appendChild(table);
 
+        // Пагінація
+        const paginationDiv = this.createPaginationControls();
+        modal.appendChild(paginationDiv);
+
         const closeButton = document.createElement('button');
         closeButton.textContent = 'Close';
         closeButton.addEventListener('click', () => document.body.removeChild(modal));
@@ -274,8 +311,83 @@ export class RoomManager {
 
         document.body.appendChild(modal);
 
-        // Додати можливість переміщення
         this.makeElementDraggable(modal, header);
+    }
+
+    updateRoomName(roomId, newName) {
+        const room = this.rooms.find(room => room.id === roomId);
+        if (room) {
+            room.name = newName;
+            this.redrawAllRooms();
+        }
+    }
+
+    updateRoomVertices(roomId, newVerticesText) {
+        const room = this.rooms.find(room => room.id === roomId);
+        if (room) {
+            const newVertices = this.parseVertices(newVerticesText);
+            if (newVertices) {
+                room.vertices = newVertices;
+                this.redrawAllRooms();
+            }
+        }
+    }
+
+    redrawAllRooms() {
+        // Очищення тільки шару з кімнатами
+        this.roomLayer.removeChildren();
+
+        // Перемалювати всі кімнати знову
+        this.rooms.forEach(room => {
+            this.addRoom(room.vertices, room.name, room.id);
+        });
+
+        paper.view.update();
+    }
+
+    parseVertices(verticesText) {
+        try {
+            const vertices = verticesText.match(/\(([^)]+)\)/g).map(v => {
+                const [x, y] = v.replace(/[()]/g, '').split(',').map(Number);
+                return new paper.Point(x, y);
+            });
+            return vertices;
+        } catch (error) {
+            console.error('Invalid vertices format:', error);
+            alert('Invalid vertices format. Please use the format (x, y), (x, y), ...');
+            return null;
+        }
+    }
+
+
+    createPaginationControls() {
+        const paginationDiv = document.createElement('div');
+        paginationDiv.style.cssText = 'margin-top: 10px; text-align: center;';
+
+        const prevButton = document.createElement('button');
+        prevButton.textContent = 'Previous';
+        prevButton.disabled = this.currentPage === 1;
+        prevButton.addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.createRoomsTable();
+            }
+        });
+
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Next';
+        nextButton.disabled = this.currentPage * this.roomsPerPage >= this.getRooms().length;
+        nextButton.addEventListener('click', () => {
+            if (this.currentPage * this.roomsPerPage < this.getRooms().length) {
+                this.currentPage++;
+                this.createRoomsTable();
+            }
+        });
+
+        paginationDiv.appendChild(prevButton);
+        paginationDiv.appendChild(nextButton);
+
+        return paginationDiv;
     }
 
     makeElementDraggable(element, handle) {

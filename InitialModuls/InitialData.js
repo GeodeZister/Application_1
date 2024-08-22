@@ -97,11 +97,19 @@
 
             document.getElementById('pointslist').addEventListener('click', async () => {
                 try {
-                    const pointsList = await ApiService.getSituationPoints();
-                    this.situationPoint.showSituationPoints(pointsList);
+                    const response = await ApiService.getSituationPoints();
+
+                    // Перевірка, чи є response об'єктом з очікуваним масивом
+                    if (response && Array.isArray(response.pointTypes)) {
+                        const pointsList = response.pointTypes;
+                        this.situationPoint.showSituationPoints(pointsList);
+                    } else {
+                        console.error('Expected an array in pointTypes, but got:', response);
+                        alert('Отримані дані некоректні. Очікувався масив типів точок.');
+                    }
                 } catch (error) {
-                    console.error(error);
-                    alert(error.message);
+                    console.error('Error fetching situation points:', error);
+                    alert('Не вдалося отримати ситуаційні точки. Будь ласка, спробуйте пізніше.');
                 }
             });
 
@@ -567,7 +575,6 @@
             this.createWayPointsTable();
         }
 
-        // Вставте цей метод в межах класу InitialData
         redrawAllElements() {
             this.wayPoint.getWayPoints().forEach(wayPoint => {
                 this.wayPoint.drawWayPoint(new paper.Point(wayPoint.x, wayPoint.y), wayPoint.id);
@@ -582,9 +589,6 @@
                 this.roomManager.addRoom(vertices, room.name, room.id);
             });
         }
-
-
-
 
         redrawImage() {
             if (!this.imageCtx) {
